@@ -1,0 +1,10 @@
+title: "KH2 JokCombat"
+originalAuthor: "Jok"
+description: "Native-first combat research prototype for Kingdom Hearts II Final Mix."
+game: kh2
+
+assets:
+- name: scripts/KH2JokCombat_RoxasProbe.lua
+  method: copy
+  source:
+  - name: diagnostics/KH2JokCombat_RoxasProbe.lua
