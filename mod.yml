@@ -4,15 +4,10 @@ description: "Native-first combat research prototype for Kingdom Hearts II Final
 game: kh2
 
 assets:
-- name: 03system.bin
-  method: binarc
+- name: scripts/KH2JokCombat_RoxasDualWield.lua
+  method: copy
   source:
-  - name: memt
-    method: listpatch
-    type: List
-    source:
-    - name: patches/memt.yml
-      type: memt
+  - name: runtime/KH2JokCombat_RoxasDualWield.lua
 
 - name: scripts/KH2JokCombat_RoxasProbe.lua
   method: copy
