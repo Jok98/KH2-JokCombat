@@ -1,13 +1,23 @@
 title: "KH2 JokCombat"
 originalAuthor: "Jok"
-description: "Native-first combat research prototype for Kingdom Hearts II Final Mix."
+description: "Native-first combat overhaul prototype for Kingdom Hearts II Final Mix."
 game: kh2
 
 assets:
+- name: obj/P_EX110_BTLF.mset
+  method: copy
+  source:
+  - name: assets/obj/P_EX110_BTLF.mset
+
 - name: scripts/KH2JokCombat_RoxasDualWield.lua
   method: copy
   source:
   - name: runtime/KH2JokCombat_RoxasDualWield.lua
+
+- name: scripts/KH2JokCombat_ComboMaster.lua
+  method: copy
+  source:
+  - name: runtime/KH2JokCombat_ComboMaster.lua
 
 - name: scripts/KH2JokCombat_RoxasProbe.lua
   method: copy
