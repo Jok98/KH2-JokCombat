@@ -1,14 +1,19 @@
 LUAGUI_NAME = "KH2 JokCombat - Roxas Dual Wield"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Enables native Roxas Dual-Wield through the loaded KH2 MEMT"
+LUAGUI_DESC = "Enables native Roxas Dual-Wield and replaces Struggle Wand with Oblivion"
 
 local kh2lib = nil
 local CanExecute = false
-local PatchCompleted = false
-local ErrorReported = false
+local MemtPatchCompleted = false
+local WeaponPatchCompleted = false
+local MemtErrorReported = false
+local WeaponErrorReported = false
 
 local ROXAS_NORMAL_OBJECT_ID = 0x005A
 local ROXAS_DUAL_WIELD_OBJECT_ID = 0x0323
+
+local STRUGGLE_WAND_ITEM_ID = 0x01F5
+local OBLIVION_ITEM_ID = 0x002B
 
 local TARGET_MEMT_INDEX = 3
 local MEMT_VERSION = 5
@@ -134,7 +139,7 @@ local function ApplyRoxasDualWield()
             "Roxas Dual-Wield gia attivo: MEMT Index 3 Player=0x0323.",
             1
         )
-        PatchCompleted = true
+        MemtPatchCompleted = true
         return true
     end
 
@@ -169,7 +174,47 @@ local function ApplyRoxasDualWield()
         memt.subfileNumber
     ), 1)
 
-    PatchCompleted = true
+    MemtPatchCompleted = true
+    return true
+end
+
+
+local function ApplyOblivion()
+    local weaponAddress = kh2lib.Save + 0x24F0
+    local before = ReadShort(weaponAddress)
+
+    -- Do not touch any other equipped weapon. During the Roxas prologue,
+    -- 0x01F5 is the Struggle Wand. We wait until that exact value appears.
+    if before == OBLIVION_ITEM_ID then
+        WeaponPatchCompleted = true
+        return true
+    end
+
+    if before ~= STRUGGLE_WAND_ITEM_ID then
+        return false
+    end
+
+    WriteShort(
+        weaponAddress,
+        OBLIVION_ITEM_ID
+    )
+
+    local after = ReadShort(weaponAddress)
+
+    if after ~= OBLIVION_ITEM_ID then
+        error(
+            "Verifica weapon write fallita: EquippedKeyblade="
+            .. Hex(after, 4)
+        )
+    end
+
+    ConsolePrint(string.format(
+        "Roxas weapon sostituita: Struggle Wand %s -> Oblivion %s",
+        Hex(before, 4),
+        Hex(after, 4)
+    ), 1)
+
+    WeaponPatchCompleted = true
     return true
 end
 
@@ -195,31 +240,48 @@ function _OnInit()
         return
     end
 
-    PatchCompleted = false
-    ErrorReported = false
+    MemtPatchCompleted = false
+    WeaponPatchCompleted = false
+    MemtErrorReported = false
+    WeaponErrorReported = false
 
     ConsolePrint("Roxas Dual-Wield runtime module inizializzato.", 1)
 end
 
 function _OnFrame()
-    if not CanExecute or PatchCompleted then
+    if not CanExecute then
         return
     end
 
-    local ok, resultOrError = pcall(ApplyRoxasDualWield)
+    if not MemtPatchCompleted then
+        local ok, resultOrError = pcall(ApplyRoxasDualWield)
 
-    if not ok then
-        if not ErrorReported then
-            ConsolePrint(
-                "Errore Roxas Dual-Wield: " .. tostring(resultOrError),
-                3
-            )
-            ErrorReported = true
+        if not ok then
+            if not MemtErrorReported then
+                ConsolePrint(
+                    "Errore Roxas Dual-Wield: " .. tostring(resultOrError),
+                    3
+                )
+                MemtErrorReported = true
+            end
+        elseif resultOrError == true then
+            MemtErrorReported = false
         end
-        return
     end
 
-    if resultOrError == true then
-        ErrorReported = false
+    if not WeaponPatchCompleted then
+        local ok, resultOrError = pcall(ApplyOblivion)
+
+        if not ok then
+            if not WeaponErrorReported then
+                ConsolePrint(
+                    "Errore Roxas Oblivion: " .. tostring(resultOrError),
+                    3
+                )
+                WeaponErrorReported = true
+            end
+        elseif resultOrError == true then
+            WeaponErrorReported = false
+        end
     end
 end
