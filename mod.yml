@@ -7,7 +7,7 @@ assets:
 - name: obj/P_EX110_BTLF.mset
   method: copy
   source:
-  - name: assets/obj/P_EX110_BTLF.mset
+  - name: assets/obj/P_EX110_BTLF_JokCombat.mset
 
 - name: scripts/KH2JokCombat_RoxasDualWield.lua
   method: copy
