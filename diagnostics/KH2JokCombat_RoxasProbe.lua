@@ -42,6 +42,10 @@ end
 -- `place` and `previousPlace` combine room and world as 0xRRWW.
 -- The returned table can be accessed with `state.world`, `state.event`, etc.
 local function ReadState()
+	-- This byte contains multiple story flags.
+    -- Bit 0: 0 = play as Roxas, 1 = play as Sora.
+    local storyFlags = ReadByte(kh2lib.Save + 0x1CEA)
+	
     return {
         world = ReadByte(kh2lib.Now + 0x00),
         room = ReadByte(kh2lib.Now + 0x01),
@@ -57,6 +61,12 @@ local function ReadState()
         battleType = ReadByte(kh2lib.BtlTyp),
         reaction = ReadShort(kh2lib.React),
         openMenu = ReadByte(kh2lib.CurrentOpenMenu),
+		storyFlags = storyFlags,
+        soraStoryFlag = storyFlags & 0x01,
+        currentForm = ReadByte(kh2lib.Save + 0x3524),
+        partyLayout = ReadInt(kh2lib.Save + 0x353C),
+        unitCharacterId = ReadShort(kh2lib.Slot1 + 0x260),
+        mainKeybladeId = ReadShort(kh2lib.Save + 0x24F0),
 
         hpCurrent = ReadInt(kh2lib.Slot1 + 0x000),
         hpMax = ReadInt(kh2lib.Slot1 + 0x004),
@@ -70,13 +80,11 @@ end
 	
 
 
--- Builds a colon-separated hexadecimal key from the game context.
---
--- The key is compared with `LastContextKey` to detect state changes
--- and avoid logging the same snapshot on every frame.
+-- Builds a key from every state value that should trigger a snapshot.
+-- When one component changes, the resulting string also changes.
 local function BuildContextKey(state)
     return string.format(
-        "%04X:%04X:%04X:%04X:%04X:%04X:%02X:%02X:%02X:%02X",
+        "%04X:%04X:%04X:%04X:%04X:%04X:%02X:%02X:%02X:%02X:%02X:%02X:%08X:%04X:%04X",
         state.place,
         state.door,
         state.map,
@@ -86,7 +94,12 @@ local function BuildContextKey(state)
         state.pause,
         state.control,
         state.battleType,
-        state.openMenu
+        state.openMenu,
+        state.soraStoryFlag,
+        state.currentForm,
+        state.partyLayout,
+        state.unitCharacterId,
+        state.mainKeybladeId
     )
 end
 
@@ -122,6 +135,16 @@ local function LogSnapshot(state, reason)
         Hex(state.battleType, 2),
         Hex(state.reaction, 4),
         Hex(state.openMenu, 2)
+    ))
+	
+	    Log(string.format(
+        "IDENTITY StoryFlags=%s SoraFlag=%s Form=%s Party=%s UnitCharacter=%s MainKeyblade=%s",
+        Hex(state.storyFlags, 2),
+        Hex(state.soraStoryFlag, 2),
+        Hex(state.currentForm, 2),
+        Hex(state.partyLayout, 8),
+        Hex(state.unitCharacterId, 4),
+        Hex(state.mainKeybladeId, 4)
     ))
 
     Log(string.format(
