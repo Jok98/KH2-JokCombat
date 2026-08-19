@@ -1,0 +1,10 @@
+MemtEntries:
+  - Index: 3
+    WorldId: 2
+    CheckStoryFlag: 2267
+    CheckStoryFlagNegation: 2256
+    CheckArea: 0
+    Padding: 0
+    PlayerSize: 3984640
+    FriendSize: 1625344
+    Members: [803, 0, 0, 0, 803, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
