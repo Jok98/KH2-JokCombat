@@ -23,3 +23,8 @@ assets:
   method: copy
   source:
   - name: diagnostics/KH2JokCombat_RoxasProbe.lua
+
+- name: scripts/KH2JokCombat_AbilityProbe.lua
+  method: copy
+  source:
+  - name: diagnostics/KH2JokCombat_AbilityProbe.lua
