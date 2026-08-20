@@ -19,6 +19,11 @@ assets:
   source:
   - name: runtime/KH2JokCombat_ComboMaster.lua
 
+- name: scripts/KH2JokCombat_Movement.lua
+  method: copy
+  source:
+  - name: runtime/KH2JokCombat_Movement.lua
+
 - name: scripts/KH2JokCombat_RoxasProbe.lua
   method: copy
   source:
