@@ -32,6 +32,16 @@ Scrivere solo su valori vuoti, attesi o già posseduti dal modulo e verificare i
 Perché:
 Sovrascrivere dati sconosciuti può corrompere save o confliggere silenziosamente con altre mod.
 
+### Vincolo: Ownership stretta dei record Drive Form
+
+Status: active
+
+Regola:
+Modificare soltanto bit unlock, Level/AbilityLevel/EXP delle cinque Form livellabili, target innate verificati, ricompense FMLV e barra Drive. Preservare weapon slot, ability extra e campi non documentati; Anti non riceve una progressione inventata e `DriveForms[5]`/Summon resta intatto.
+
+Perché:
+I record da `0x38` byte contengono stato persistente condiviso con equipaggiamento e altre mod. I dati vanilla PLRP/FMLV forniscono target verificabili senza sovrascrivere il resto.
+
 ### Vincolo: MSET tracciabile
 
 Status: active

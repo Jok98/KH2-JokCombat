@@ -1,6 +1,6 @@
 LUAGUI_NAME = "KH2 JokCombat - Ability Probe"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Read-only probe for Sora movement and combo-core abilities"
+LUAGUI_DESC = "Read-only probe for Sora movement, Drive Forms and standard abilities"
 
 local kh2lib = nil
 local CanExecute = false
@@ -15,6 +15,25 @@ local EQUIPPED_FLAG = 0x8000
 
 local SORA_STORY_FLAG_OFFSET = 0x1CEA
 local SORA_STORY_FLAG_MASK = 0x01
+
+local ITEM_SET_1_OFFSET = 0x36C0
+local ITEM_SET_1_FORM_MASK = 0x76
+local ITEM_SET_11_OFFSET = 0x36CA
+local ITEM_SET_11_LIMIT_MASK = 0x08
+local CURRENT_FORM_OFFSET = 0x3524
+local DRIVE_SAVE_CURRENT_OFFSET = 0x3529
+local DRIVE_SAVE_MAX_OFFSET = 0x352A
+local DRIVE_LIVE_PERCENT_OFFSET = 0x1B0
+local DRIVE_LIVE_CURRENT_OFFSET = 0x1B1
+local DRIVE_LIVE_MAX_OFFSET = 0x1B2
+
+local DRIVE_FORMS = {
+    { name = "Valor", blockOffset = 0x32F4 },
+    { name = "Wisdom", blockOffset = 0x332C },
+    { name = "Limit", blockOffset = 0x3364 },
+    { name = "Master", blockOffset = 0x339C },
+    { name = "Final", blockOffset = 0x33D4 }
+}
 
 local MOVEMENT = {
     {
@@ -59,7 +78,17 @@ local STANDARD_ABILITIES = {
     { name = "Combo Master", id = 0x021B },
     { name = "Combo Plus", id = 0x00A2 },
     { name = "Air Combo Plus", id = 0x00A3 },
-    { name = "Finishing Plus", id = 0x0189 }
+    { name = "Finishing Plus", id = 0x0189 },
+    { name = "Auto Valor", id = 0x0181 },
+    { name = "Auto Wisdom", id = 0x0182 },
+    { name = "Auto Limit", id = 0x0238 },
+    { name = "Auto Master", id = 0x0183 },
+    { name = "Auto Final", id = 0x0184 },
+    { name = "MP Rage", id = 0x019C },
+    { name = "MP Haste", id = 0x019D },
+    { name = "Draw", id = 0x0195 },
+    { name = "Lucky Lucky", id = 0x0197 },
+    { name = "Form Boost", id = 0x018E }
 }
 
 local function Hex(value, width)
@@ -129,6 +158,70 @@ local function LogGrowthAbilities()
     end
 end
 
+local function LogDriveForms()
+    local itemSet1 = ReadByte(kh2lib.Save + ITEM_SET_1_OFFSET)
+    local itemSet11 = ReadByte(kh2lib.Save + ITEM_SET_11_OFFSET)
+    local currentForm = ReadByte(kh2lib.Save + CURRENT_FORM_OFFSET)
+    local saveCurrent = ReadByte(kh2lib.Save + DRIVE_SAVE_CURRENT_OFFSET)
+    local saveMax = ReadByte(kh2lib.Save + DRIVE_SAVE_MAX_OFFSET)
+    local livePercent = ReadByte(kh2lib.Slot1 + DRIVE_LIVE_PERCENT_OFFSET)
+    local liveCurrent = ReadByte(kh2lib.Slot1 + DRIVE_LIVE_CURRENT_OFFSET)
+    local liveMax = ReadByte(kh2lib.Slot1 + DRIVE_LIVE_MAX_OFFSET)
+
+    ConsolePrint("=== DRIVE FORMS ===", 0)
+    ConsolePrint(string.format(
+        "Unlocks ItemSet1=%s target=%s ItemSet11=%s Limit=%s CurrentForm=%s",
+        Hex(itemSet1, 2),
+        (itemSet1 & ITEM_SET_1_FORM_MASK) == ITEM_SET_1_FORM_MASK
+            and "YES" or "NO",
+        Hex(itemSet11, 2),
+        (itemSet11 & ITEM_SET_11_LIMIT_MASK) == ITEM_SET_11_LIMIT_MASK
+            and "YES" or "NO",
+        Hex(currentForm, 2)
+    ), 0)
+    ConsolePrint(string.format(
+        "Drive save=%d/%d live=%d/%d percent=%d",
+        saveCurrent,
+        saveMax,
+        liveCurrent,
+        liveMax,
+        livePercent
+    ), 0)
+
+    for _, form in ipairs(DRIVE_FORMS) do
+        local weapon = ReadShort(kh2lib.Save + form.blockOffset)
+        local level = ReadByte(kh2lib.Save + form.blockOffset + 0x02)
+        local abilityLevel = ReadByte(kh2lib.Save + form.blockOffset + 0x03)
+        local experience = ReadInt(kh2lib.Save + form.blockOffset + 0x04)
+        local firstAbility = ReadShort(kh2lib.Save + form.blockOffset + 0x08)
+        local nonzeroAbilities = 0
+
+        for slot = 0, 23 do
+            if ReadShort(
+                kh2lib.Save + form.blockOffset + 0x08 + (slot * 2)
+            ) ~= 0 then
+                nonzeroAbilities = nonzeroAbilities + 1
+            end
+        end
+
+        ConsolePrint(string.format(
+            "%-7s Level=%d AbilityLevel=%d EXP=%d Weapon=%s FirstAbility=%s AbilitySlots=%d/24",
+            form.name,
+            level,
+            abilityLevel,
+            experience,
+            Hex(weapon, 4),
+            Hex(firstAbility, 4),
+            nonzeroAbilities
+        ), 0)
+    end
+
+    ConsolePrint(string.format(
+        "Anti    unlocked=%s innate PLRP=[0x80F8,0x80F9,0x8194] (index 5 e Summon)",
+        (itemSet1 & 0x20) ~= 0 and "YES" or "NO"
+    ), 0)
+end
+
 local function FindStandardAbility(targetId)
     local matches = {}
 
@@ -155,7 +248,7 @@ local function FindStandardAbility(targetId)
 end
 
 local function LogStandardAbilities()
-    ConsolePrint("=== COMBO CORE / STANDARD ===", 0)
+    ConsolePrint("=== STANDARD SORA ABILITIES ===", 0)
 
     for _, ability in ipairs(STANDARD_ABILITIES) do
         local matches = FindStandardAbility(ability.id)
@@ -193,6 +286,7 @@ local function LogAbilitySnapshot()
         Hex(room, 2)
     ), 0)
 
+    LogDriveForms()
     LogGrowthAbilities()
     LogStandardAbilities()
 
