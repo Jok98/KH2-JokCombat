@@ -144,14 +144,15 @@ local DRIVE_FORMS = {
 -- Exact vanilla FMLV rewards earned while leveling all five normal forms.
 -- Growth rewards are represented by the five dedicated base-Sora slots and by
 -- each form's first ability slot. Combo Plus and Air Combo Plus intentionally
--- share the same target counts as Sora Combo Core, making both modules
--- idempotent regardless of Lua load order.
+-- share the same target counts as Sora Combat Core, making both modules
+-- idempotent regardless of Lua load order. Auto Form rewards remain present
+-- for completeness but are deliberately written without the equipped bit.
 local FORM_REWARD_ABILITIES = {
-    { name = "Auto Valor", id = 0x0181, targetCount = 1 },
-    { name = "Auto Wisdom", id = 0x0182, targetCount = 1 },
-    { name = "Auto Limit", id = 0x0238, targetCount = 1 },
-    { name = "Auto Master", id = 0x0183, targetCount = 1 },
-    { name = "Auto Final", id = 0x0184, targetCount = 1 },
+    { name = "Auto Valor", id = 0x0181, targetCount = 1, equipped = false },
+    { name = "Auto Wisdom", id = 0x0182, targetCount = 1, equipped = false },
+    { name = "Auto Limit", id = 0x0238, targetCount = 1, equipped = false },
+    { name = "Auto Master", id = 0x0183, targetCount = 1, equipped = false },
+    { name = "Auto Final", id = 0x0184, targetCount = 1, equipped = false },
     { name = "Combo Plus", id = 0x00A2, targetCount = 2 },
     { name = "MP Rage", id = 0x019C, targetCount = 1 },
     { name = "MP Haste", id = 0x019D, targetCount = 1 },
@@ -550,16 +551,21 @@ local function InspectFormRewards(writes)
 
     for _, ability in ipairs(FORM_REWARD_ABILITIES) do
         local matches = matchesById[ability.id]
+        local shouldEquip = ability.equipped ~= false
 
         for _, match in ipairs(matches) do
-            if (match.before & EQUIPPED_FLAG) == 0 then
+            local desired = shouldEquip
+                and (match.before | EQUIPPED_FLAG)
+                or (match.before & 0x7FFF)
+
+            if desired ~= match.before then
                 AddWrite(
                     writes,
                     "short",
                     ability.name .. " slot " .. tostring(match.index),
                     match.address,
                     match.before,
-                    match.before | EQUIPPED_FLAG
+                    desired
                 )
             end
         end
@@ -576,7 +582,7 @@ local function InspectFormRewards(writes)
                 ability.name .. " nuovo slot " .. tostring(freeSlot.index),
                 freeSlot.address,
                 freeSlot.before,
-                ability.id | EQUIPPED_FLAG
+                ability.id | (shouldEquip and EQUIPPED_FLAG or 0)
             )
         end
     end
@@ -759,9 +765,11 @@ local function EnsureSoraMaxAp()
 end
 
 local function VerifyFormRewards()
+    local presentCounts = {}
     local equippedCounts = {}
 
     for _, ability in ipairs(FORM_REWARD_ABILITIES) do
+        presentCounts[ability.id] = 0
         equippedCounts[ability.id] = 0
     end
 
@@ -771,20 +779,39 @@ local function VerifyFormRewards()
         )
         local abilityId = value & ABILITY_ID_MASK
 
-        if equippedCounts[abilityId] ~= nil
-            and (value & EQUIPPED_FLAG) ~= 0 then
+        if presentCounts[abilityId] ~= nil then
+            presentCounts[abilityId] = presentCounts[abilityId] + 1
 
-            equippedCounts[abilityId] = equippedCounts[abilityId] + 1
+            if (value & EQUIPPED_FLAG) ~= 0 then
+                equippedCounts[abilityId] = equippedCounts[abilityId] + 1
+            end
         end
     end
 
     for _, ability in ipairs(FORM_REWARD_ABILITIES) do
-        if equippedCounts[ability.id] < ability.targetCount then
+        local shouldEquip = ability.equipped ~= false
+
+        if presentCounts[ability.id] < ability.targetCount then
+            error(string.format(
+                "Verifica %s fallita: %d presenti, attese almeno %d",
+                ability.name,
+                presentCounts[ability.id],
+                ability.targetCount
+            ))
+        end
+
+        if shouldEquip and equippedCounts[ability.id] < ability.targetCount then
             error(string.format(
                 "Verifica %s fallita: %d equipaggiate, attese almeno %d",
                 ability.name,
                 equippedCounts[ability.id],
                 ability.targetCount
+            ))
+        elseif not shouldEquip and equippedCounts[ability.id] ~= 0 then
+            error(string.format(
+                "Verifica %s fallita: %d copie ancora equipaggiate",
+                ability.name,
+                equippedCounts[ability.id]
             ))
         end
     end
@@ -806,7 +833,7 @@ local function EnableAllForms()
     VerifyFormRewards()
 
     ConsolePrint(string.format(
-        "Sora Forms pronto: Valor/Wisdom/Limit/Master/Final LV7, Anti sbloccata, Drive 9/9, AP 255 e ricompense Form equipaggiate (%d aggiornamenti).",
+        "Sora Forms pronto: Valor/Wisdom/Limit/Master/Final LV7, Anti sbloccata, Drive 9/9, AP 255; tutte le Auto Form sono presenti ma disabilitate (%d aggiornamenti).",
         #writes
     ), 1)
 

@@ -24,6 +24,17 @@ Square o il secondo salto possono tornare a produrre T-pose.
 Mitigazione:
 Il runtime le lascia visibili a MAX ma disabilitate; non equipaggiarle manualmente finché Sora usa il costume KH1.
 
+### Rischio: Action avanzate nel MSET del costume KH1
+
+Condizione:
+Una delle Action Ability sbloccate richiama una motion non disponibile o incompatibile in `P_EX100_KH1F.mset`.
+
+Impatto:
+L'attacco può produrre T-pose, blocco temporaneo o una transizione errata, come già osservato con alcune growth.
+
+Mitigazione:
+Provare le 19 Action operative una per volta dopo Build/F1, senza salvare finché il set non è validato. Non importare motion in massa: isolare prima l'Action e lo slot nativo responsabile.
+
 ### Rischio: Form anticipate durante il costume KH1
 
 Condizione:
@@ -97,6 +108,7 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 
 - Le cinque growth ability a livello MAX alterano intenzionalmente la progressione Sora; nel costume KH1 solo High Jump è equipaggiato.
 - Il nucleo combo `1 + 2 + 2` altera intenzionalmente la progressione delle support ability Sora.
+- Tutte le 25 Action Ability vengono anticipate; le sei Auto restano intenzionalmente disabilitate.
 - Tutte le Form, le innate e le ricompense di livello alterano intenzionalmente la progressione; Drive viene portato e riempito a 9/9.
 - L'MSET Roxas resta nel pacchetto come baseline chiusa anche durante il lavoro Sora.
 

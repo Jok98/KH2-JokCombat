@@ -47,7 +47,7 @@ Ogni record Final Mix è lungo `0x38` byte: weapon `+0`, Level `+2`, AbilityLeve
 
 I bit vengono aggiunti con OR: `Save+0x36C0 |= 0x76` e `Save+0x36CA |= 0x08`, senza rimuovere item estranei. Drive persistente usa `Save+0x3529/0x352A`; lo stato live usa `Slot1+0x1B0..0x1B2`. Il target è percentuale `100`, corrente `9`, massimo `9`, applicato solo con Sora in forma base.
 
-Le ricompense FMLV inserite ed equipaggiate nella tabella standard sono Auto Valor/Wisdom/Limit/Master/Final, Combo Plus x2, MP Rage, MP Haste, Draw, Lucky Lucky, Air Combo Plus x2 e Form Boost x2. Il modulo controlla prima la capacità dei 69 slot, preserva abilità estranee e verifica ogni target dopo le write.
+Le ricompense FMLV inserite nella tabella standard sono Auto Valor/Wisdom/Limit/Master/Final, Combo Plus x2, MP Rage, MP Haste, Draw, Lucky Lucky, Air Combo Plus x2 e Form Boost x2. Le cinque Auto Form vengono conservate senza bit equipaggiato; le altre ricompense sono attive. Il modulo controlla prima la capacità dei 69 slot, preserva abilità estranee e verifica ogni target dopo le write.
 
 ## AP Sora
 
@@ -55,17 +55,21 @@ Gli AP disponibili nel personaggio live risiedono nel byte `Slot1+0x18E`; `Save+
 
 L'Ability Probe registra sia AP live sia AP Boost applicati, restando read-only. Gli AP non vengono resi persistenti nella save: dipendono intenzionalmente dal modulo attivo, mentre Form, ability e Drive continuano a seguire la loro ownership persistente esistente.
 
-## Nucleo combo Sora
+## Combat Core Sora
 
-| Abilità | ID | Copie target | Valore equipaggiato |
-| --- | --- | --- | --- |
-| Combo Master | `0x021B` | 1 | `0x821B` |
-| Combo Plus | `0x00A2` | 2 | `0x80A2` |
-| Air Combo Plus | `0x00A3` | 2 | `0x80A3` |
+`KH2JokCombat_ComboMaster.lua` mantiene il nome file storico ma possiede l'intero pool Action standard di Sora e il nucleo combo. Gli ID derivano dalla lista Final Mix usata dal Randomizer:
 
-Il modulo scansiona i 69 slot standard da `Save+0x2544`, registra copie esistenti e slot vuoti, verifica la capacità prima della prima write, aggiunge soltanto le copie mancanti ed equipaggia ogni copia corrispondente. Non rimuove copie extra e non sovrascrive abilità estranee.
+| Gruppo | Target |
+| --- | --- |
+| Ground/defense | Guard, Upper Slash, Horizontal Slash, Finishing Leap, Retaliating Slash, Slapshot, Dodge Slash, Flash Step, Slide Dash, Vicinity Break, Guard Break, Explosion e Counterguard |
+| Air | Aerial Sweep, Aerial Dive, Aerial Spiral, Aerial Finish e Magnet Burst |
+| Limit | Trinity Limit |
+| Auto | Auto Valor, Wisdom, Limit, Master, Final e Summon presenti ma disabilitate |
+| Combo support | Combo Master x1, Combo Plus x2 e Air Combo Plus x2 equipaggiati |
 
-L'Ability Probe è read-only, usa la stessa guardia Sora e stampa ogni match della tabella standard, quindi due righe per ciascuna famiglia Combo Plus sono il risultato atteso.
+Il modulo scansiona i 69 slot da `Save+0x2544`, verifica la capacità prima della prima write, riusa le copie esistenti e aggiunge soltanto quelle mancanti. Ogni copia target viene portata allo stato richiesto: bit `0x8000` sulle 19 Action operative e sul nucleo combo, bit rimosso sulle sei Auto. Abilità estranee e copie extra non target restano intatte.
+
+L'Ability Probe è read-only e riporta per ogni target quantità presente, quantità equipaggiata, stato atteso ON/OFF e slot occupati.
 
 ## Pattern da preservare
 

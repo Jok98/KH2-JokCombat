@@ -86,21 +86,22 @@ Conseguenze:
 - Disabilitare il modulo rimuove la garanzia runtime; nessun AP Boost artificiale resta nella save.
 - Ogni valore live inferiore viene portato a 255; nessun valore maggiore è rappresentabile nel campo.
 
-### Decisione: Nucleo combo completo da subito
+### Decisione: Combat Core completo da subito
 
 Status: active
 Area: combo
 
 Decisione:
-Garantire ed equipaggiare su Sora Combo Master x1, Combo Plus x2 e Air Combo Plus x2, cioè tutte le copie del pool support standard.
+Garantire tutte le 25 Action Ability standard di Sora, equipaggiare le 19 azioni operative e mantenere Auto Valor, Wisdom, Limit, Master, Final e Summon presenti ma disabilitate. Conservare inoltre Combo Master x1, Combo Plus x2 e Air Combo Plus x2 equipaggiati.
 
 Rationale:
-Il primo obiettivo combo richiede continuità anche a vuoto e la massima lunghezza nativa sia a terra sia in aria.
+Il focus è sperimentare subito l'intero moveset nativo di Sora; le Auto non aggiungono mosse e possono attivare Form/Limit involontariamente, mentre il nucleo combo deve mantenere continuità e lunghezza massime.
 
 Conseguenze:
-- Il modulo riusa la tabella abilità standard e non ricostruisce la combo in Lua.
-- Le copie già presenti vengono riusate ed equipaggiate; si aggiungono solo quelle mancanti.
-- La progressione vanilla di queste support ability viene intenzionalmente superata.
+- Il modulo riusa la tabella standard da 69 slot e non ricostruisce attacchi o combo in Lua.
+- Le copie già presenti vengono riusate; si aggiungono solo quelle mancanti e si verifica lo stato ON/OFF dopo ogni write.
+- Il test con costume KH1 deve coprire ogni Action perché alcune motion avanzate potrebbero non essere disponibili nel relativo MSET.
+- La progressione vanilla di Action e support combo viene intenzionalmente superata.
 
 ### Decisione: Clone OpenKH come working copy canonica
 

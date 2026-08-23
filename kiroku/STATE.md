@@ -10,7 +10,7 @@ KH2-JokCombat è un overhaul native-first del combat di Kingdom Hearts II Final 
 - Nel costume KH1 il profilo sicuro mantiene tutte le growth a livello MAX ma equipaggia soltanto High Jump; Quick Run, Dodge Roll, Aerial Dodge e Glide restano nella lista disabilitate.
 - Valor non è più usato come proxy del costume: tutte le Form vengono sbloccate subito, quindi Movement mantiene sempre il profilo KH1 verificato finché non esiste un segnale diretto del modello attivo.
 - `KH2JokCombat_Forms.lua` sblocca Valor, Wisdom, Limit, Master, Final e Anti; porta le cinque Form livellabili a Level 7/AbilityLevel 4, garantisce le innate vanilla, assegna le ricompense FMLV, riempie Drive a 9/9 e mantiene Sora a 255 AP live.
-- Il Sora Combo Core resta attivo e indipendente con Combo Master x1, Combo Plus x2 e Air Combo Plus x2 equipaggiati.
+- Il Sora Combat Core garantisce tutte le 25 Action Ability: 19 sono equipaggiate, Auto Valor/Wisdom/Limit/Master/Final/Summon sono presenti ma OFF; Combo Master x1, Combo Plus x2 e Air Combo Plus x2 restano equipaggiati.
 - Il test gameplay ha confermato T-pose su Square e secondo salto anche con sette motion standard importate nel MSET KH1; override, asset e manifest entry sono stati rimossi.
 - La clone Git OpenKH è la working copy canonica; la repository ChatGPT non è più una sorgente attiva.
 
@@ -23,6 +23,7 @@ KH2-JokCombat è un overhaul native-first del combat di Kingdom Hearts II Final 
 - Il vanilla `00battle.bin/plrp` conferma gli array innate 129–133 delle cinque Form normali e la riga 134 nativa di Anti.
 - Il vanilla `00battle.bin/fmlv` conferma Level 7/AbilityLevel 4 e le ricompense Auto Form, support, Combo Plus/Air Combo Plus e Form Boost usate dal runtime.
 - OpenKH distingue il contatore persistente `ApBoost` dagli AP totali; il runtime KH2 usa il byte `Slot1+0x18E` per gli AP live, quindi `0xFF`/255 è il massimo rappresentabile.
+- Il pool Action Final Mix verificato contiene 25 ID standard: 19 azioni operative, cinque Auto Form, Auto Summon e Trinity Limit; tutti risiedono nei 69 slot da `Save+0x2544`.
 - L'MSET Roxas in pacchetto differisce dal vanilla soltanto nelle cinque entry previste `R000`, `R001`, `R002`, `R100`, `R101`.
 
 ## Domande aperte
@@ -30,12 +31,14 @@ KH2-JokCombat è un overhaul native-first del combat di Kingdom Hearts II Final 
 - Dopo Build e F1, il menu Drive mostra tutte e sei le Form, barra 9/9 e le cinque progressioni a livello 7?
 - Valor, Wisdom, Limit, Master, Final e Anti trasformano e rientrano correttamente durante il costume KH1?
 - Square e secondo salto restano nativi senza T-pose con le quattro growth base problematiche disabilitate?
-- Il probe conferma AP live 255, High Jump equipaggiato, le altre quattro growth base disabilitate, innate complete e ricompense standard equipaggiate?
+- Le 19 Action equipaggiate funzionano con il costume KH1 senza animazioni mancanti, mentre le sei Auto risultano presenti ma OFF?
+- Il probe conferma AP live 255, High Jump equipaggiato, le altre quattro growth base disabilitate, Action complete, innate complete e ricompense standard?
 - Dopo la validazione movement, quale famiglia nativa di attacchi Sora conviene mappare per prima?
 
 ## Punti da sorvegliare
 
 - Equipaggiare manualmente una delle quattro growth durante il costume KH1 può riprodurre la T-pose.
+- Le Action Ability avanzate non sono ancora state provate sul MSET del costume KH1 e potrebbero esporre altre motion mancanti.
 - Lo sblocco anticipato delle Form nel costume KH1 non è ancora validato in gameplay; il runtime non modifica i weapon slot dei record Form.
 - Gli AP a 255 sono runtime e vengono ripristinati quando `Slot1` viene ricostruito; il contatore AP Boost della save resta invariato.
 - Livelli e stato equipaggiato delle ability persistono al salvataggio e possono interagire con altre mod.

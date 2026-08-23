@@ -102,11 +102,28 @@ local EXPECTED_FORMS = {
     }
 }
 
-local EXPECTED_REWARDS = {
-    0x0181, 0x0182, 0x0238, 0x0183, 0x0184,
+local EXPECTED_ACTIVE_REWARDS = {
     0x00A2, 0x00A2, 0x019C, 0x019D, 0x0195,
     0x0197, 0x00A3, 0x00A3, 0x018E, 0x018E
 }
+
+local EXPECTED_DISABLED_AUTOS = {
+    0x0181, 0x0182, 0x0238, 0x0183, 0x0184
+}
+
+local function CountPresent(address, slotCount, targetId)
+    local count = 0
+
+    for slot = 0, slotCount - 1 do
+        local value = ReadShort(address + (slot * 2))
+
+        if (value & 0x0FFF) == targetId then
+            count = count + 1
+        end
+    end
+
+    return count
+end
 
 local function CountEquipped(address, slotCount, targetId)
     local count = 0
@@ -157,6 +174,11 @@ memory[SAVE + 0x2546] = 0x80A2
 memory[SAVE + 0x2548] = 0x80A2
 memory[SAVE + 0x254A] = 0x80A3
 memory[SAVE + 0x254C] = 0x80A3
+memory[SAVE + 0x254E] = 0x8181
+memory[SAVE + 0x2550] = 0x8182
+memory[SAVE + 0x2552] = 0x8238
+memory[SAVE + 0x2554] = 0x8183
+memory[SAVE + 0x2556] = 0x8184
 memory[SAVE + 0x2544 + (68 * 2)] = 0x8ABC
 
 for _, form in ipairs(EXPECTED_FORMS) do
@@ -210,10 +232,21 @@ end
 
 local standardAddress = SAVE + 0x2544
 
-for targetId, targetCount in pairs(CountTargets(EXPECTED_REWARDS)) do
+for targetId, targetCount in pairs(CountTargets(EXPECTED_ACTIVE_REWARDS)) do
     assert(
         CountEquipped(standardAddress, 69, targetId) >= targetCount,
         string.format("standard reward 0x%04X", targetId)
+    )
+end
+
+for _, targetId in ipairs(EXPECTED_DISABLED_AUTOS) do
+    assert(
+        CountPresent(standardAddress, 69, targetId) >= 1,
+        string.format("Auto reward 0x%04X missing", targetId)
+    )
+    assert(
+        CountEquipped(standardAddress, 69, targetId) == 0,
+        string.format("Auto reward 0x%04X still equipped", targetId)
     )
 end
 

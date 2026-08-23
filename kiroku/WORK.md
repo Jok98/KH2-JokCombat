@@ -2,6 +2,19 @@
 
 ## In corso
 
+### Attività: Sbloccare tutte le Action Ability Sora
+
+Status: ongoing
+
+Completamento:
+Dopo OpenKH Build e F1, il menu mostra tutte le 25 Action Ability; le 19 azioni operative, inclusa Trinity Limit, funzionano nel costume KH1, mentre Auto Valor/Wisdom/Limit/Master/Final/Summon restano presenti ma disabilitate senza T-pose o attivazioni involontarie.
+
+Note:
+- Il file storico `KH2JokCombat_ComboMaster.lua` ora possiede Action e support combo nella tabella standard da 69 slot.
+- Combo Master x1, Combo Plus x2 e Air Combo Plus x2 restano equipaggiati.
+- Il piano è transazionale: capacità e valori vengono letti prima della prima write; ability estranee restano intatte.
+- Smoke test Lupa: 30 write verificate, riparazione dopo load, idempotenza e capacità insufficiente fail-closed senza write parziali.
+
 ### Attività: Sbloccare e massimizzare tutte le Drive Form
 
 Status: ongoing
@@ -28,7 +41,7 @@ Note:
 - Il test dell'MSET ricostruito è fallito in gameplay nonostante il delta BAR staticamente corretto; l'override KH1 è stato rimosso.
 - Il runtime non usa più Valor come proxy del costume perché le Form sono sbloccate subito.
 - Scrive sempre `0x8061`, `0x0065`, `0x0237`, `0x0069`, `0x006D` finché non esiste un segnale diretto e verificato del costume KH2.
-- Combo Master e i Combo Plus ground/air non dipendono dal profilo movement e restano attivi.
+- Action Ability e support combo non dipendono dal profilo movement; le growth base problematiche restano comunque OFF.
 - Smoke test Fengari: cinque write attese anche con tutti i bit Form presenti, poi seconda frame idempotente.
 - Per rimuovere un vecchio override MSET dalla build live serve Build più riavvio completo; per i soli script aggiornati basta Build e F1.
 
@@ -65,6 +78,7 @@ I rami A/Y hanno input, transizioni, comportamento ground/air e condizioni di fi
 - Aggiunto `KH2JokCombat_Forms.lua` con unlock nativi, Level 7, innate PLRP, ricompense FMLV, Drive 9/9, guardie fail-closed e verifica post-write.
 - Esteso l'Ability Probe con bit Form, progressione, weapon slot, 24 ability slot e stato Drive.
 - Portati gli AP live di Sora a 255 nel modulo Forms, preservando il contatore AP Boost persistente.
+- Esteso il Combat Core alle 25 Action Ability con 19 azioni operative ON, sei Auto OFF e probe/test dedicati.
 
 ## Annullato
 

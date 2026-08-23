@@ -77,21 +77,39 @@ local MOVEMENT = {
 }
 
 local STANDARD_ABILITIES = {
-    { name = "Aerial Recovery", id = 0x009E },
-    { name = "Combo Master", id = 0x021B },
-    { name = "Combo Plus", id = 0x00A2 },
-    { name = "Air Combo Plus", id = 0x00A3 },
-    { name = "Finishing Plus", id = 0x0189 },
-    { name = "Auto Valor", id = 0x0181 },
-    { name = "Auto Wisdom", id = 0x0182 },
-    { name = "Auto Limit", id = 0x0238 },
-    { name = "Auto Master", id = 0x0183 },
-    { name = "Auto Final", id = 0x0184 },
-    { name = "MP Rage", id = 0x019C },
-    { name = "MP Haste", id = 0x019D },
-    { name = "Draw", id = 0x0195 },
-    { name = "Lucky Lucky", id = 0x0197 },
-    { name = "Form Boost", id = 0x018E }
+    { name = "Guard", id = 0x0052, targetCount = 1, equipped = true },
+    { name = "Upper Slash", id = 0x0089, targetCount = 1, equipped = true },
+    { name = "Horizontal Slash", id = 0x010F, targetCount = 1, equipped = true },
+    { name = "Finishing Leap", id = 0x010B, targetCount = 1, equipped = true },
+    { name = "Retaliating Slash", id = 0x0111, targetCount = 1, equipped = true },
+    { name = "Slapshot", id = 0x0106, targetCount = 1, equipped = true },
+    { name = "Dodge Slash", id = 0x0107, targetCount = 1, equipped = true },
+    { name = "Flash Step", id = 0x022F, targetCount = 1, equipped = true },
+    { name = "Slide Dash", id = 0x0108, targetCount = 1, equipped = true },
+    { name = "Vicinity Break", id = 0x0232, targetCount = 1, equipped = true },
+    { name = "Guard Break", id = 0x0109, targetCount = 1, equipped = true },
+    { name = "Explosion", id = 0x010A, targetCount = 1, equipped = true },
+    { name = "Aerial Sweep", id = 0x010D, targetCount = 1, equipped = true },
+    { name = "Aerial Dive", id = 0x0230, targetCount = 1, equipped = true },
+    { name = "Aerial Spiral", id = 0x010E, targetCount = 1, equipped = true },
+    { name = "Aerial Finish", id = 0x0110, targetCount = 1, equipped = true },
+    { name = "Magnet Burst", id = 0x0231, targetCount = 1, equipped = true },
+    { name = "Counterguard", id = 0x010C, targetCount = 1, equipped = true },
+    { name = "Auto Valor", id = 0x0181, targetCount = 1, equipped = false },
+    { name = "Auto Wisdom", id = 0x0182, targetCount = 1, equipped = false },
+    { name = "Auto Limit", id = 0x0238, targetCount = 1, equipped = false },
+    { name = "Auto Master", id = 0x0183, targetCount = 1, equipped = false },
+    { name = "Auto Final", id = 0x0184, targetCount = 1, equipped = false },
+    { name = "Auto Summon", id = 0x0185, targetCount = 1, equipped = false },
+    { name = "Trinity Limit", id = 0x00C6, targetCount = 1, equipped = true },
+    { name = "Combo Master", id = 0x021B, targetCount = 1, equipped = true },
+    { name = "Combo Plus", id = 0x00A2, targetCount = 2, equipped = true },
+    { name = "Air Combo Plus", id = 0x00A3, targetCount = 2, equipped = true },
+    { name = "MP Rage", id = 0x019C, targetCount = 1, equipped = true },
+    { name = "MP Haste", id = 0x019D, targetCount = 1, equipped = true },
+    { name = "Draw", id = 0x0195, targetCount = 1, equipped = true },
+    { name = "Lucky Lucky", id = 0x0197, targetCount = 1, equipped = true },
+    { name = "Form Boost", id = 0x018E, targetCount = 2, equipped = true }
 }
 
 local function Hex(value, width)
@@ -267,29 +285,43 @@ local function FindStandardAbility(targetId)
 end
 
 local function LogStandardAbilities()
-    ConsolePrint("=== STANDARD SORA ABILITIES ===", 0)
+    ConsolePrint("=== SORA ACTION / COMBO / FORM REWARDS ===", 0)
 
     for _, ability in ipairs(STANDARD_ABILITIES) do
         local matches = FindStandardAbility(ability.id)
+        local equippedCount = 0
+        local slots = {}
 
-        if #matches == 0 then
-            ConsolePrint(string.format(
-                "%-16s ABSENT id=%s",
-                ability.name,
-                Hex(ability.id, 4)
-            ), 0)
-        else
-            for _, match in ipairs(matches) do
-                ConsolePrint(string.format(
-                    "%-16s %-8s id=%s value=%s slot=%d",
-                    ability.name,
-                    match.equipped and "EQUIPPED" or "PRESENT",
-                    Hex(ability.id, 4),
-                    Hex(match.value, 4),
-                    match.slot
-                ), 0)
+        for _, match in ipairs(matches) do
+            if match.equipped then
+                equippedCount = equippedCount + 1
             end
+
+            slots[#slots + 1] = string.format(
+                "%d:%s",
+                match.slot,
+                match.equipped and "ON" or "OFF"
+            )
         end
+
+        local shouldEquip = ability.equipped ~= false
+        local ready = #matches >= ability.targetCount
+            and (
+                (shouldEquip and equippedCount >= ability.targetCount)
+                or (not shouldEquip and equippedCount == 0)
+            )
+
+        ConsolePrint(string.format(
+            "%-18s %-8s id=%s target=%s x%d present=%d equipped=%d slots=[%s]",
+            ability.name,
+            ready and "READY" or "MISMATCH",
+            Hex(ability.id, 4),
+            shouldEquip and "ON" or "OFF",
+            ability.targetCount,
+            #matches,
+            equippedCount,
+            table.concat(slots, ",")
+        ), 0)
     end
 end
 

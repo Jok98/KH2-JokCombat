@@ -1,6 +1,6 @@
-LUAGUI_NAME = "KH2 JokCombat - Sora Combo Core"
+LUAGUI_NAME = "KH2 JokCombat - Sora Combat Abilities"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Enables Combo Master and every ground/air Combo Plus on Sora"
+LUAGUI_DESC = "Unlocks every native Sora action ability; all Auto actions stay disabled"
 
 local kh2lib = nil
 local CanExecute = false
@@ -18,25 +18,38 @@ local STANDARD_ABILITY_SLOT_COUNT = 69
 local ABILITY_ID_MASK = 0x0FFF
 local EQUIPPED_FLAG = 0x8000
 
--- Native Sora support-ability pool: one Combo Master and two copies of each
--- Combo Plus family. Every existing matching copy is equipped as well, so a
--- modded save with additional copies remains internally consistent.
-local COMBO_ABILITIES = {
-    {
-        name = "Combo Master",
-        id = 0x021B,
-        targetCount = 1
-    },
-    {
-        name = "Combo Plus",
-        id = 0x00A2,
-        targetCount = 2
-    },
-    {
-        name = "Air Combo Plus",
-        id = 0x00A3,
-        targetCount = 2
-    }
+-- Complete Final Mix Sora Action Ability pool in native menu order. All six
+-- Auto actions stay owned by the game/save but are deliberately disabled.
+-- The already-adopted Combo Core support targets remain part of this module.
+local COMBAT_ABILITIES = {
+    { name = "Guard", id = 0x0052, targetCount = 1, equipped = true },
+    { name = "Upper Slash", id = 0x0089, targetCount = 1, equipped = true },
+    { name = "Horizontal Slash", id = 0x010F, targetCount = 1, equipped = true },
+    { name = "Finishing Leap", id = 0x010B, targetCount = 1, equipped = true },
+    { name = "Retaliating Slash", id = 0x0111, targetCount = 1, equipped = true },
+    { name = "Slapshot", id = 0x0106, targetCount = 1, equipped = true },
+    { name = "Dodge Slash", id = 0x0107, targetCount = 1, equipped = true },
+    { name = "Flash Step", id = 0x022F, targetCount = 1, equipped = true },
+    { name = "Slide Dash", id = 0x0108, targetCount = 1, equipped = true },
+    { name = "Vicinity Break", id = 0x0232, targetCount = 1, equipped = true },
+    { name = "Guard Break", id = 0x0109, targetCount = 1, equipped = true },
+    { name = "Explosion", id = 0x010A, targetCount = 1, equipped = true },
+    { name = "Aerial Sweep", id = 0x010D, targetCount = 1, equipped = true },
+    { name = "Aerial Dive", id = 0x0230, targetCount = 1, equipped = true },
+    { name = "Aerial Spiral", id = 0x010E, targetCount = 1, equipped = true },
+    { name = "Aerial Finish", id = 0x0110, targetCount = 1, equipped = true },
+    { name = "Magnet Burst", id = 0x0231, targetCount = 1, equipped = true },
+    { name = "Counterguard", id = 0x010C, targetCount = 1, equipped = true },
+    { name = "Auto Valor", id = 0x0181, targetCount = 1, equipped = false },
+    { name = "Auto Wisdom", id = 0x0182, targetCount = 1, equipped = false },
+    { name = "Auto Limit", id = 0x0238, targetCount = 1, equipped = false },
+    { name = "Auto Master", id = 0x0183, targetCount = 1, equipped = false },
+    { name = "Auto Final", id = 0x0184, targetCount = 1, equipped = false },
+    { name = "Auto Summon", id = 0x0185, targetCount = 1, equipped = false },
+    { name = "Trinity Limit", id = 0x00C6, targetCount = 1, equipped = true },
+    { name = "Combo Master", id = 0x021B, targetCount = 1, equipped = true },
+    { name = "Combo Plus", id = 0x00A2, targetCount = 2, equipped = true },
+    { name = "Air Combo Plus", id = 0x00A3, targetCount = 2, equipped = true }
 }
 
 local function Hex(value, width)
@@ -56,12 +69,20 @@ local function IsSoraGameplayReady()
         and maxHp > 0
 end
 
-local function BuildComboPlan()
+local function DesiredAbilityValue(ability, value)
+    if ability.equipped then
+        return value | EQUIPPED_FLAG
+    end
+
+    return value & 0x7FFF
+end
+
+local function BuildCombatPlan()
     local abilityById = {}
     local matchesById = {}
     local freeSlots = {}
 
-    for _, ability in ipairs(COMBO_ABILITIES) do
+    for _, ability in ipairs(COMBAT_ABILITIES) do
         abilityById[ability.id] = ability
         matchesById[ability.id] = {}
     end
@@ -91,7 +112,7 @@ local function BuildComboPlan()
 
     local missingTotal = 0
 
-    for _, ability in ipairs(COMBO_ABILITIES) do
+    for _, ability in ipairs(COMBAT_ABILITIES) do
         local missing = ability.targetCount - #matchesById[ability.id]
 
         if missing > 0 then
@@ -111,19 +132,21 @@ local function BuildComboPlan()
     local changes = {}
     local freeIndex = 1
 
-    for _, ability in ipairs(COMBO_ABILITIES) do
+    for _, ability in ipairs(COMBAT_ABILITIES) do
         local matches = matchesById[ability.id]
 
-        -- Equip every copy already present, including any extra copy from a
-        -- modded save. No duplicate is added until the native target is short.
+        -- Keep every matching copy in the requested state. This also disables
+        -- Auto actions already equipped by the save or another mod.
         for _, match in ipairs(matches) do
-            if (match.before & EQUIPPED_FLAG) == 0 then
+            local desired = DesiredAbilityValue(ability, match.before)
+
+            if desired ~= match.before then
                 changes[#changes + 1] = {
                     ability = ability,
                     index = match.index,
                     address = match.address,
                     before = match.before,
-                    desired = match.before | EQUIPPED_FLAG,
+                    desired = desired,
                     added = false
                 }
             end
@@ -140,7 +163,8 @@ local function BuildComboPlan()
                 index = freeSlot.index,
                 address = freeSlot.address,
                 before = freeSlot.before,
-                desired = ability.id | EQUIPPED_FLAG,
+                desired = ability.id
+                    | (ability.equipped and EQUIPPED_FLAG or 0),
                 added = true
             }
         end
@@ -149,10 +173,12 @@ local function BuildComboPlan()
     return changes
 end
 
-local function VerifyComboCore()
+local function VerifyCombatAbilities()
+    local presentCounts = {}
     local equippedCounts = {}
 
-    for _, ability in ipairs(COMBO_ABILITIES) do
+    for _, ability in ipairs(COMBAT_ABILITIES) do
+        presentCounts[ability.id] = 0
         equippedCounts[ability.id] = 0
     end
 
@@ -161,30 +187,51 @@ local function VerifyComboCore()
         local value = ReadShort(address)
         local abilityId = value & ABILITY_ID_MASK
 
-        if equippedCounts[abilityId] ~= nil
-            and (value & EQUIPPED_FLAG) ~= 0 then
+        if presentCounts[abilityId] ~= nil then
+            presentCounts[abilityId] = presentCounts[abilityId] + 1
 
-            equippedCounts[abilityId] = equippedCounts[abilityId] + 1
+            if (value & EQUIPPED_FLAG) ~= 0 then
+                equippedCounts[abilityId] = equippedCounts[abilityId] + 1
+            end
         end
     end
 
-    for _, ability in ipairs(COMBO_ABILITIES) do
-        if equippedCounts[ability.id] < ability.targetCount then
+    for _, ability in ipairs(COMBAT_ABILITIES) do
+        if presentCounts[ability.id] < ability.targetCount then
+            error(string.format(
+                "Verifica %s fallita: %d presenti, attese almeno %d",
+                ability.name,
+                presentCounts[ability.id],
+                ability.targetCount
+            ))
+        end
+
+        if ability.equipped
+            and equippedCounts[ability.id] < ability.targetCount then
+
             error(string.format(
                 "Verifica %s fallita: %d equipaggiate, attese almeno %d",
                 ability.name,
                 equippedCounts[ability.id],
                 ability.targetCount
             ))
+        elseif not ability.equipped
+            and equippedCounts[ability.id] ~= 0 then
+
+            error(string.format(
+                "Verifica %s fallita: %d copie ancora equipaggiate",
+                ability.name,
+                equippedCounts[ability.id]
+            ))
         end
     end
 
-    return equippedCounts
+    return presentCounts, equippedCounts
 end
 
-local function EnableSoraComboCore()
+local function EnableSoraCombatAbilities()
     -- Capacity and all current values are inspected before the first write.
-    local changes = BuildComboPlan()
+    local changes = BuildCombatPlan()
 
     for _, change in ipairs(changes) do
         local current = ReadShort(change.address)
@@ -203,8 +250,10 @@ local function EnableSoraComboCore()
 
         local after = ReadShort(change.address)
 
+        local isEquipped = (after & EQUIPPED_FLAG) ~= 0
+
         if (after & ABILITY_ID_MASK) ~= change.ability.id
-            or (after & EQUIPPED_FLAG) == 0 then
+            or isEquipped ~= change.ability.equipped then
 
             error(string.format(
                 "Verifica %s slot %d fallita: %s",
@@ -215,19 +264,20 @@ local function EnableSoraComboCore()
         end
 
         ConsolePrint(string.format(
-            "%s %s ed equipaggiato: slot=%d %s -> %s",
+            "%s %s e %s: slot=%d %s -> %s",
             change.ability.name,
             change.added and "aggiunto" or "trovato",
+            change.ability.equipped and "equipaggiato" or "disabilitato",
             change.index,
             Hex(change.before, 4),
             Hex(after, 4)
         ), 1)
     end
 
-    local equippedCounts = VerifyComboCore()
+    local _, equippedCounts = VerifyCombatAbilities()
 
     ConsolePrint(string.format(
-        "Sora Combo Core pronto: Combo Master x%d, Combo Plus x%d, Air Combo Plus x%d equipaggiati (%d aggiornamenti).",
+        "Sora Combat pronto: 19 Action equipaggiate, 6 Auto presenti/disabilitate; Combo Master x%d, Combo Plus x%d, Air Combo Plus x%d (%d aggiornamenti).",
         equippedCounts[0x021B],
         equippedCounts[0x00A2],
         equippedCounts[0x00A3],
@@ -271,7 +321,7 @@ function _OnInit()
     end
 
     ConsolePrint(
-        "Sora Combo Core inizializzato: attendo gameplay Sora.",
+        "Sora Combat Abilities inizializzato: attendo gameplay Sora.",
         1
     )
 end
@@ -286,7 +336,7 @@ function _OnFrame()
     if not readyOk then
         if not ErrorReported then
             ConsolePrint(
-                "Errore controllo Sora Combo Core: "
+                "Errore controllo Sora Combat Abilities: "
                 .. tostring(readyOrError),
                 3
             )
@@ -306,11 +356,11 @@ function _OnFrame()
         return
     end
 
-    local patchOk, patchError = pcall(EnableSoraComboCore)
+    local patchOk, patchError = pcall(EnableSoraCombatAbilities)
 
     if not patchOk then
         ConsolePrint(
-            "Errore Sora Combo Core; modulo disabilitato fino a F1: "
+            "Errore Sora Combat Abilities; modulo disabilitato fino a F1: "
             .. tostring(patchError),
             3
         )

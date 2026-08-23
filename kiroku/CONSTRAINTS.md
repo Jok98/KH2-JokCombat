@@ -67,10 +67,20 @@ Perché:
 Status: active
 
 Regola:
-Prima del possesso vanilla di Valor, lasciare Quick Run, Dodge Roll, Aerial Dodge e Glide nella lista a MAX ma senza bit equipaggiato; soltanto High Jump può restare attivo.
+Finché non esiste un segnale diretto del costume KH2, lasciare Quick Run, Dodge Roll, Aerial Dodge e Glide nella lista a MAX ma senza bit equipaggiato; soltanto High Jump può restare attivo.
 
 Perché:
 Il gameplay ha confermato T-pose su Square e secondo salto nel modello KH1 anche dopo un import MSET staticamente corretto.
+
+### Vincolo: Auto Action presenti ma disabilitate
+
+Status: active
+
+Regola:
+Auto Valor, Auto Wisdom, Auto Limit, Auto Master, Auto Final e Auto Summon devono esistere nella tabella standard ma avere il bit equipaggiato rimosso.
+
+Perché:
+Il pool Action deve essere completo senza attivazioni automatiche di Form, Limit o Summon; entrambi i moduli che condividono queste ability devono convergere sullo stesso stato OFF.
 
 ## Fuori scope
 
