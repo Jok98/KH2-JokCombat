@@ -42,6 +42,16 @@ Ogni import motion deve registrare sorgente, slot sorgente, slot destinazione, n
 Perché:
 Un MSET è un asset binario completo e una sostituzione involontaria è difficile da diagnosticare nel gameplay.
 
+### Vincolo: Movement sicuro nel costume KH1
+
+Status: active
+
+Regola:
+Prima del possesso vanilla di Valor, lasciare Quick Run, Dodge Roll, Aerial Dodge e Glide nella lista a MAX ma senza bit equipaggiato; soltanto High Jump può restare attivo.
+
+Perché:
+Il gameplay ha confermato T-pose su Square e secondo salto nel modello KH1 anche dopo un import MSET staticamente corretto.
+
 ## Fuori scope
 
 - Rifinitura del post-landing e delle transizioni armi Roxas.

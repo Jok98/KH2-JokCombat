@@ -7,32 +7,30 @@ KH2-JokCombat è un overhaul native-first del combat di Kingdom Hearts II Final 
 ## Stato corrente
 
 - Roxas è concluso per scope e resta come baseline tecnica recuperabile dalla cronologia Git.
-- Le cinque growth MAX e il nucleo combo `1 + 2 + 2` risultano applicati dal runtime Sora corrente; il costume KH1 mostrava T-pose su Square neutro e secondo salto.
-- Il log del test mostra Sora base (`SoraFlag=1`, `Form=0`) con Drive `3/3` e Gauge `100`: la barra Drive esiste già e non spiega la T-pose.
-- Il costume iniziale usa `P_EX100_KH1F.mset`: rispetto a `P_EX100`, le entry Growth 810, 814, 818, 822, 826, 830 e 834 erano `DUMM`; solo `A180` era già presente.
-- `P_EX100_KH1F_JokCombat.mset` importa in quei sette slot le ANB vanilla corrispondenti e non cambia le altre 986 entry; manifest aggiornato, gameplay ancora da validare dopo Build e riavvio.
-- La clone Git OpenKH è la working copy canonica e contiene tutto il delta Sora e Kiroku; la vecchia repository ChatGPT è stata ripristinata pulita.
+- Nel costume KH1 il profilo sicuro mantiene tutte le growth a livello MAX ma equipaggia soltanto High Jump; Quick Run, Dodge Roll, Aerial Dodge e Glide restano nella lista disabilitate.
+- `Save+0x36C0 & 0x02` (possesso di Valor) è il proxy persistente dell'evento vanilla che assegna i vestiti KH2; quando il bit compare, il runtime equipaggia automaticamente tutte e cinque le growth MAX.
+- Il Sora Combo Core resta attivo e indipendente con Combo Master x1, Combo Plus x2 e Air Combo Plus x2 equipaggiati.
+- Il test gameplay ha confermato T-pose su Square e secondo salto anche con sette motion standard importate nel MSET KH1; override, asset e manifest entry sono stati rimossi.
+- La clone Git OpenKH è la working copy canonica; la repository ChatGPT non è più una sorgente attiva.
 
 ## Verificato di recente
 
-- Il 2026-08-23 `main` è stato aggiornato al commit `222bbf1` prima delle modifiche correnti.
-- KH2 Lua Library 2.1 espone indirizzi compatibili per le versioni PC riconosciute e viene richiesta con versione minima 2.
-- Garden of Assemblage usa gli slot growth `0x25CE`, `0x25D0`, `0x25D2`, `0x25D4`, `0x25D6` e gli stessi intervalli ID adottati dal progetto.
-- KH2Randomizer supporta growth iniziali per Sora indipendentemente dallo sblocco delle Drive Form; OpenKH identifica `P_EX100/A180` come Quick Run.
-- `Save+0x1CEA` bit 0 vale 0 per Roxas e 1 per Sora.
-- Il pool support standard di Sora contiene Combo Master x1 (`0x021B`), Combo Plus x2 (`0x00A2`) e Air Combo Plus x2 (`0x00A3`).
-- L'MSET modificato differisce dal vanilla in cinque entry: `R000`, `R001`, `R002`, `R100`, `R101`.
-- Il nuovo MSET KH1-costume conserva 993 entry e differisce dal vanilla soltanto negli slot 810=`A160`, 814=`A150`, 818=`A151`, 822=`A170`, 826=`A171`, 830=`A172`, 834=`A173`.
+- KH2 Lua Library 2.1 documenta `Save+0x36C0` come `ItemSet1` e il bit `0x02` come Valor Form.
+- Gli slot growth sono `0x25CE`, `0x25D0`, `0x25D2`, `0x25D4`, `0x25D6`; i livelli MAX non equipaggiati sono rispettivamente `0x0061`, `0x0065`, `0x0237`, `0x0069`, `0x006D`.
+- `Save+0x1CEA` bit 0 separa Sora da Roxas per le write runtime.
+- Il log del test aveva già confermato Drive `3/3`, Gauge `100` e nucleo combo `1 + 2 + 2`; sbloccare tutte le fusioni non era necessario.
+- L'MSET Roxas in pacchetto differisce dal vanilla soltanto nelle cinque entry previste `R000`, `R001`, `R002`, `R100`, `R101`.
 
 ## Domande aperte
 
-- Le sette motion importate funzionano sul costume KH1 per Square neutro/con direzione, secondo salto e Glide dopo Build e riavvio?
-- Il menu e Ability Probe confermano Combo Master x1, Combo Plus x2 e Air Combo Plus x2 dopo la distribuzione del vero Sora Combo Core?
+- Dopo Build e riavvio, Square e secondo salto restano nativi senza T-pose con le quattro growth problematiche disabilitate?
+- Il menu conferma High Jump equipaggiato, le altre quattro growth visibili ma disabilitate e il nucleo combo ancora equipaggiato?
 - Dopo la validazione movement, quale famiglia nativa di attacchi Sora conviene mappare per prima?
 
 ## Punti da sorvegliare
 
-- Le write growth e combo persistono al salvataggio e possono interagire con altri mod che usano gli stessi slot.
-- Il modulo si riabilita dopo title/loading, ma il cambio diretto di save deve essere verificato in gioco.
-- OpenKH ricompone la cartella live dalla clone installata: le copie manuali in `openkh/mod/kh2/scripts` vengono sovrascritte al Build successivo.
+- Equipaggiare manualmente una delle quattro growth durante il costume KH1 può riprodurre la T-pose.
+- Il gate Valor presuppone la progressione vanilla; una mod che assegna Valor prima dei vestiti KH2 richiederebbe una guardia diversa.
+- Livelli e stato equipaggiato delle ability persistono al salvataggio e possono interagire con altre mod.
+- OpenKH ricompone la cartella live dalla clone installata; la rimozione del vecchio MSET richiede Build e riavvio completo.
 - La sintassi Lua non dispone ancora di un test automatico locale equivalente a LuaBackend.

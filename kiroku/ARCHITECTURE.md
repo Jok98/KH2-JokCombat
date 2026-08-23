@@ -18,17 +18,19 @@
 
 ## Movimento Sora
 
-| Abilità | Slot save | ID livelli | Valore MAX equipaggiato |
+| Abilità | Slot save | Costume KH1 | Costume KH2 |
 | --- | --- | --- | --- |
-| High Jump | `0x25CE` | `0x005E`–`0x0061` | `0x8061` |
-| Quick Run | `0x25D0` | `0x0062`–`0x0065` | `0x8065` |
-| Dodge Roll | `0x25D2` | `0x0234`–`0x0237` | `0x8237` |
-| Aerial Dodge | `0x25D4` | `0x0066`–`0x0069` | `0x8069` |
-| Glide | `0x25D6` | `0x006A`–`0x006D` | `0x806D` |
+| High Jump | `0x25CE` | `0x8061` attiva | `0x8061` attiva |
+| Quick Run | `0x25D0` | `0x0065` disabilitata | `0x8065` attiva |
+| Dodge Roll | `0x25D2` | `0x0237` disabilitata | `0x8237` attiva |
+| Aerial Dodge | `0x25D4` | `0x0069` disabilitata | `0x8069` attiva |
+| Glide | `0x25D6` | `0x006D` disabilitata | `0x806D` attiva |
 
 Il bit `0x8000` indica equipaggiata; `0x0FFF` estrae l'ID. Il modulo ispeziona tutti e cinque gli slot prima della prima write, accetta solo vuoto o un livello della famiglia attesa, quindi scrive e rilegge ogni valore.
 
-Il costume iniziale KH1 usa `P_EX100_KH1F.mset`, dove sette slot Growth vanilla sono `DUMM`. L'asset JokCombat importa da `P_EX100.mset` le entry `A160`, `A150`, `A151`, `A170`–`A173` negli stessi indici 810, 814, 818, 822, 826, 830 e 834; `A180` era già identico e non viene modificato. La provenienza completa è in `docs/SORA_KH1F_GROWTH_MSET.md`.
+Il profilo usa `Save+0x36C0 & 0x02` (possesso di Valor) come proxy persistente dell'evento vanilla che assegna i vestiti KH2. In assenza del bit il default è fail-safe: solo High Jump equipaggiato. Il runtime rivaluta il profilo dopo loading/title e quando il bit cambia durante la sessione.
+
+Il pacchetto non sostituisce più `P_EX100_KH1F.mset`: l'import di sette motion da `P_EX100.mset`, pur corretto a livello BAR, ha mantenuto la T-pose nel test gameplay ed è stato rimosso.
 
 ## Nucleo combo Sora
 

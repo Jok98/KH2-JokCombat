@@ -1,18 +1,22 @@
 LUAGUI_NAME = "KH2 JokCombat - Sora Movement"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Enables every Sora growth ability at MAX level"
+LUAGUI_DESC = "Keeps Sora growth abilities safe for the active story outfit"
 
 local kh2lib = nil
 local CanExecute = false
-local PatchCompleted = false
+local AppliedProfile = nil
 local PatchDisabled = false
 local ErrorReported = false
 
 local SORA_STORY_FLAG_OFFSET = 0x1CEA
 local SORA_STORY_FLAG_MASK = 0x01
+local ITEM_SET_1_OFFSET = 0x36C0
+local VALOR_FORM_MASK = 0x02
 
 local ABILITY_ID_MASK = 0x0FFF
 local EQUIPPED_FLAG = 0x8000
+local PROFILE_KH1_OUTFIT = "kh1-outfit"
+local PROFILE_KH2_OUTFIT = "kh2-outfit"
 
 -- KH2 stores the five growth abilities in dedicated consecutive save slots.
 -- Each family has four levels; the last ID is the MAX version.
@@ -21,31 +25,36 @@ local GROWTH_ABILITIES = {
         name = "High Jump",
         slotOffset = 0x25CE,
         minId = 0x005E,
-        maxId = 0x0061
+        maxId = 0x0061,
+        kh1Safe = true
     },
     {
         name = "Quick Run",
         slotOffset = 0x25D0,
         minId = 0x0062,
-        maxId = 0x0065
+        maxId = 0x0065,
+        kh1Safe = false
     },
     {
         name = "Dodge Roll",
         slotOffset = 0x25D2,
         minId = 0x0234,
-        maxId = 0x0237
+        maxId = 0x0237,
+        kh1Safe = false
     },
     {
         name = "Aerial Dodge",
         slotOffset = 0x25D4,
         minId = 0x0066,
-        maxId = 0x0069
+        maxId = 0x0069,
+        kh1Safe = false
     },
     {
         name = "Glide",
         slotOffset = 0x25D6,
         minId = 0x006A,
-        maxId = 0x006D
+        maxId = 0x006D,
+        kh1Safe = false
     }
 }
 
@@ -66,9 +75,37 @@ local function IsSoraGameplayReady()
         and maxHp > 0
 end
 
+-- In the vanilla story Valor Form is granted together with Sora's KH2
+-- clothes. The inventory bit is persistent and is a safer gate than world or
+-- room IDs; until it exists, default to the KH1-safe movement profile.
+local function GetMovementProfile()
+    local itemSet1 = ReadByte(kh2lib.Save + ITEM_SET_1_OFFSET)
+    local hasValor = (itemSet1 & VALOR_FORM_MASK) ~= 0
+
+    if hasValor then
+        return PROFILE_KH2_OUTFIT, itemSet1
+    end
+
+    return PROFILE_KH1_OUTFIT, itemSet1
+end
+
+local function GetDesiredGrowthValue(ability, profile)
+    local desired = ability.maxId
+
+    if profile == PROFILE_KH2_OUTFIT or ability.kh1Safe then
+        desired = desired | EQUIPPED_FLAG
+    end
+
+    return desired
+end
+
 -- Read and validate every slot before writing any of them. This prevents an
 -- unrelated or modded value in one slot from leaving a partially applied set.
-local function InspectGrowthSlots()
+local function InspectGrowthSlots(profile)
+    if profile ~= PROFILE_KH1_OUTFIT and profile ~= PROFILE_KH2_OUTFIT then
+        error("Profilo movement sconosciuto: " .. tostring(profile))
+    end
+
     local slots = {}
 
     for index, ability in ipairs(GROWTH_ABILITIES) do
@@ -91,15 +128,15 @@ local function InspectGrowthSlots()
             ability = ability,
             address = address,
             before = before,
-            desired = ability.maxId | EQUIPPED_FLAG
+            desired = GetDesiredGrowthValue(ability, profile)
         }
     end
 
     return slots
 end
 
-local function EnableAllGrowthAbilities()
-    local slots = InspectGrowthSlots()
+local function ApplyMovementProfile(profile, itemSet1)
+    local slots = InspectGrowthSlots(profile)
     local changedCount = 0
 
     for _, slot in ipairs(slots) do
@@ -118,32 +155,51 @@ local function EnableAllGrowthAbilities()
 
             changedCount = changedCount + 1
 
-            ConsolePrint(string.format(
-                "%s MAX equipaggiato: Save+%s %s -> %s",
-                slot.ability.name,
-                Hex(slot.ability.slotOffset, 4),
-                Hex(slot.before, 4),
-                Hex(after, 4)
-            ), 1)
+            if (slot.desired & EQUIPPED_FLAG) ~= 0 then
+                ConsolePrint(string.format(
+                    "%s MAX equipaggiato: Save+%s %s -> %s",
+                    slot.ability.name,
+                    Hex(slot.ability.slotOffset, 4),
+                    Hex(slot.before, 4),
+                    Hex(after, 4)
+                ), 1)
+            else
+                ConsolePrint(string.format(
+                    "%s MAX lasciato in lista ma disabilitato: Save+%s %s -> %s",
+                    slot.ability.name,
+                    Hex(slot.ability.slotOffset, 4),
+                    Hex(slot.before, 4),
+                    Hex(after, 4)
+                ), 1)
+            end
         end
     end
 
-    ConsolePrint(string.format(
-        "Sora movement pronto: 5 growth ability MAX equipaggiate (%d aggiornate).",
-        changedCount
-    ), 1)
+    if profile == PROFILE_KH1_OUTFIT then
+        ConsolePrint(string.format(
+            "Profilo costume KH1 pronto: High Jump MAX attivo; altre 4 growth MAX in lista ma disabilitate (%d aggiornate, ItemSet1=%s).",
+            changedCount,
+            Hex(itemSet1, 2)
+        ), 1)
+    else
+        ConsolePrint(string.format(
+            "Profilo costume KH2 pronto: 5 growth ability MAX equipaggiate (%d aggiornate, ItemSet1=%s).",
+            changedCount,
+            Hex(itemSet1, 2)
+        ), 1)
+    end
 
     ConsolePrint(
-        "Nota: le growth ability sono nella save RAM; salvando la partita diventano persistenti.",
+        "Nota: livelli e stato equipaggiato sono nella save RAM; salvando la partita diventano persistenti.",
         2
     )
 
-    PatchCompleted = true
+    AppliedProfile = profile
 end
 
 function _OnInit()
     CanExecute = false
-    PatchCompleted = false
+    AppliedProfile = nil
     PatchDisabled = false
     ErrorReported = false
 
@@ -195,18 +251,37 @@ function _OnFrame()
     end
 
     if not readyOrError then
-        -- Re-arm the one-shot patch after returning to title/loading so a
-        -- different Sora save can be validated and initialized as well.
-        PatchCompleted = false
+        -- Re-arm after title/loading so a different Sora save is inspected.
+        AppliedProfile = nil
         ErrorReported = false
         return
     end
 
-    if PatchCompleted then
+    local profileOk, profileOrError, itemSet1 = pcall(GetMovementProfile)
+
+    if not profileOk then
+        if not ErrorReported then
+            ConsolePrint(
+                "Errore lettura profilo Sora Movement: "
+                .. tostring(profileOrError),
+                3
+            )
+            ErrorReported = true
+        end
         return
     end
 
-    local patchOk, patchError = pcall(EnableAllGrowthAbilities)
+    local profile = profileOrError
+
+    if AppliedProfile == profile then
+        return
+    end
+
+    local patchOk, patchError = pcall(
+        ApplyMovementProfile,
+        profile,
+        itemSet1
+    )
 
     if not patchOk then
         ConsolePrint(
