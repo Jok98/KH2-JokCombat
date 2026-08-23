@@ -146,6 +146,8 @@ memory[SAVE + 0x36C0] = 0x80
 memory[SAVE + 0x36CA] = 0x10
 memory[SAVE + 0x3529] = 3
 memory[SAVE + 0x352A] = 3
+memory[SAVE + 0x24F8] = 7
+memory[SLOT1 + 0x18E] = 2
 memory[SLOT1 + 0x1B0] = 25
 memory[SLOT1 + 0x1B1] = 3
 memory[SLOT1 + 0x1B2] = 3
@@ -176,6 +178,8 @@ assert(memory[SAVE + 0x352A] == 9, "save Drive max not full")
 assert(memory[SLOT1 + 0x1B0] == 100, "live Drive percent not full")
 assert(memory[SLOT1 + 0x1B1] == 9, "live Drive current not full")
 assert(memory[SLOT1 + 0x1B2] == 9, "live Drive max not full")
+assert(memory[SLOT1 + 0x18E] == 255, "live Sora AP not maxed")
+assert(memory[SAVE + 0x24F8] == 7, "persistent AP Boost count was modified")
 assert(memory[SAVE + 0x2544] == 0x821B, "Combo Master was modified")
 assert(memory[SAVE + 0x2544 + (68 * 2)] == 0x8ABC, "standard extra was overwritten")
 assert(memory[SAVE + 0x340C + 0x02] == 6, "Summon level was overwritten")
@@ -217,6 +221,18 @@ local writesAfterFirstFrame = writeCount
 _OnFrame()
 assert(writeCount == writesAfterFirstFrame, "second frame was not idempotent")
 
+-- Slot1 is rebuilt across loads; the completed module must restore AP without
+-- replaying the persistent Form patch.
+memory[SLOT1 + 0x18E] = 50
+local writesBeforeApRepair = writeCount
+_OnFrame()
+assert(memory[SLOT1 + 0x18E] == 255, "live Sora AP was not restored")
+assert(writeCount == writesBeforeApRepair + 1, "AP repair changed extra fields")
+
+local writesAfterApRepair = writeCount
+_OnFrame()
+assert(writeCount == writesAfterApRepair, "AP repair was not idempotent")
+
 local successfulWriteCount = writeCount
 
 -- A foreign value in the canonical growth slot must abort during inspection,
@@ -226,6 +242,7 @@ writeCount = 0
 memory[NOW + 0x00] = 0x02
 memory[NOW + 0x01] = 0x00
 memory[SLOT1 + 0x004] = 20
+memory[SLOT1 + 0x18E] = 2
 memory[SAVE + 0x1CEA] = 0x01
 memory[SAVE + 0x36C0] = 0x80
 memory[SAVE + 0x32F4 + 0x08] = 0x8ABC

@@ -69,6 +69,23 @@ Conseguenze:
 - Le patch Lua devono restare strette e verificabili.
 - La grammatica combo A/Y verrà progettata dopo la mappatura delle risorse native Sora.
 
+### Decisione: AP live di Sora al massimo del campo
+
+Status: active
+Area: stats
+
+Decisione:
+Mantenere gli AP live di Sora a `0xFF`/255 tramite `Slot1+0x18E`, senza modificare il contatore AP Boost della save.
+
+Rationale:
+OpenKH espone nella save solo `ApBoost`, non il totale AP. Il campo live è un byte e la richiesta è il massimo assoluto, quindi 255 è il target corretto; 150 è soltanto il limite scelto dall'interfaccia del Randomizer per Starting AP.
+
+Conseguenze:
+- Il target viene applicato soltanto con identità Sora e forma base verificate.
+- Una ricostruzione di `Slot1` può azzerare il valore, quindi il modulo lo ripristina in modo idempotente.
+- Disabilitare il modulo rimuove la garanzia runtime; nessun AP Boost artificiale resta nella save.
+- Ogni valore live inferiore viene portato a 255; nessun valore maggiore è rappresentabile nel campo.
+
 ### Decisione: Nucleo combo completo da subito
 
 Status: active

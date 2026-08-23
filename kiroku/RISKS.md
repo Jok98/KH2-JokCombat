@@ -35,17 +35,6 @@ Modello, motion, weapon slot o transizioni potrebbero dipendere da stato di prog
 Mitigazione:
 Il modulo usa bit e record nativi, preserva i weapon slot e garantisce gli array innate vanilla. Verificare ogni trasformazione e ritorno con una save di prova prima di salvare.
 
-### Rischio: AP inferiore alle ricompense Form equipaggiate
-
-Condizione:
-Le ricompense Auto Form/support dei livelli massimi vengono equipaggiate su un Sora iniziale con pochi AP.
-
-Impatto:
-Il menu può mostrare AP usati oltre il budget vanilla, anche se i flag ability sono presenti.
-
-Mitigazione:
-Non modificare statistiche AP fuori scope. Il probe elenca tutte le copie equipaggiate; rivalutare solo se il gioco le disattiva o mostra un comportamento incoerente.
-
 ### Rischio: Weapon slot Form non inizializzati
 
 Condizione:
@@ -113,6 +102,7 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 
 ## Rischi chiusi
 
+- Il budget AP insufficiente alle ricompense Form è coperto dal target live 255; `Save+0x24F8` resta intatto.
 - La possibile copia Combo Master già inserita dal vecchio runtime viene rilevata, riusata ed equipaggiata senza duplicarla.
 - L'ipotesi che l'import delle motion standard rendesse sicure le growth nel costume KH1 è stata falsificata dal gameplay; asset e manifest entry sono stati rimossi.
 - Lo sblocco delle Drive Form non è una correzione della T-pose: resta una funzione di progressione separata, mentre il problema segue le growth base equipaggiate.

@@ -52,6 +52,16 @@ Ogni import motion deve registrare sorgente, slot sorgente, slot destinazione, n
 Perché:
 Un MSET è un asset binario completo e una sostituzione involontaria è difficile da diagnosticare nel gameplay.
 
+### Vincolo: AP senza alterare gli AP Boost persistenti
+
+Status: active
+
+Regola:
+Per massimizzare gli AP di Sora usare soltanto il campo live `Slot1+0x18E`, con target `0xFF`; non scrivere `Save+0x24F8`.
+
+Perché:
+`Save+0x24F8` conta gli AP Boost applicati e non rappresenta gli AP totali. Portarlo arbitrariamente al limite del byte falsificherebbe la progressione e potrebbe sommarsi ai parametri base.
+
 ### Vincolo: Movement sicuro nel costume KH1
 
 Status: active

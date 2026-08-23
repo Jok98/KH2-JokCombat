@@ -14,8 +14,8 @@ Note:
 - I record Level/AbilityLevel/EXP e gli array da 24 slot seguono il layout OpenKH Final Mix; gli array target derivano da `00battle.bin/plrp` 129–133.
 - Anti viene soltanto sbloccata: il record `DriveForms[5]`/`0x340C` appartiene a Summon ed è protetto da una regressione smoke dedicata.
 - Le ricompense standard derivano da `00battle.bin/fmlv`; le copie Combo Plus/Air Combo Plus coincidono con il Combo Core.
-- Barra persistente e live vengono portate a `9/9`, con percentuale live `100`.
-- Smoke test Fengari: inizializzazione da record vuoti, extra e Summon preservati, seconda frame idempotente e caso fail-closed senza write parziali.
+- Barra persistente e live vengono portate a `9/9`, con percentuale live `100`; gli AP live vengono portati al massimo byte 255 senza toccare `Save+0x24F8`.
+- Smoke test Fengari: inizializzazione da record vuoti, extra e Summon preservati, AP idempotenti/ripristinati dopo rebuild di `Slot1` e caso fail-closed senza write parziali.
 
 ### Attività: Rendere sicuro il movement nel costume KH1
 
@@ -64,6 +64,7 @@ I rami A/Y hanno input, transizioni, comportamento ground/air e condizioni di fi
 - Verificato il merge della PR precedente e aggiornato `main` alla merge commit `cca034c`.
 - Aggiunto `KH2JokCombat_Forms.lua` con unlock nativi, Level 7, innate PLRP, ricompense FMLV, Drive 9/9, guardie fail-closed e verifica post-write.
 - Esteso l'Ability Probe con bit Form, progressione, weapon slot, 24 ability slot e stato Drive.
+- Portati gli AP live di Sora a 255 nel modulo Forms, preservando il contatore AP Boost persistente.
 
 ## Annullato
 

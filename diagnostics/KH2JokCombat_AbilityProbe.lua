@@ -26,6 +26,9 @@ local DRIVE_SAVE_MAX_OFFSET = 0x352A
 local DRIVE_LIVE_PERCENT_OFFSET = 0x1B0
 local DRIVE_LIVE_CURRENT_OFFSET = 0x1B1
 local DRIVE_LIVE_MAX_OFFSET = 0x1B2
+local SORA_AP_BOOST_COUNT_OFFSET = 0x24F8
+local SORA_LIVE_AP_OFFSET = 0x18E
+local SORA_MAX_AP = 0xFF
 
 local DRIVE_FORMS = {
     { name = "Valor", blockOffset = 0x32F4 },
@@ -222,6 +225,22 @@ local function LogDriveForms()
     ), 0)
 end
 
+local function LogSoraAp()
+    local liveAp = ReadByte(kh2lib.Slot1 + SORA_LIVE_AP_OFFSET)
+    local appliedBoosts = ReadByte(
+        kh2lib.Save + SORA_AP_BOOST_COUNT_OFFSET
+    )
+
+    ConsolePrint("=== SORA AP ===", 0)
+    ConsolePrint(string.format(
+        "AP live=%d target=%d status=%s APBoost applicati(save)=%d [preservati]",
+        liveAp,
+        SORA_MAX_AP,
+        liveAp == SORA_MAX_AP and "MAX" or "LOW",
+        appliedBoosts
+    ), 0)
+end
+
 local function FindStandardAbility(targetId)
     local matches = {}
 
@@ -286,6 +305,7 @@ local function LogAbilitySnapshot()
         Hex(room, 2)
     ), 0)
 
+    LogSoraAp()
     LogDriveForms()
     LogGrowthAbilities()
     LogStandardAbilities()

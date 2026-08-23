@@ -49,6 +49,12 @@ I bit vengono aggiunti con OR: `Save+0x36C0 |= 0x76` e `Save+0x36CA |= 0x08`, se
 
 Le ricompense FMLV inserite ed equipaggiate nella tabella standard sono Auto Valor/Wisdom/Limit/Master/Final, Combo Plus x2, MP Rage, MP Haste, Draw, Lucky Lucky, Air Combo Plus x2 e Form Boost x2. Il modulo controlla prima la capacità dei 69 slot, preserva abilità estranee e verifica ogni target dopo le write.
 
+## AP Sora
+
+Gli AP disponibili nel personaggio live risiedono nel byte `Slot1+0x18E`; `Save+0x24F8` è invece soltanto il numero persistente di AP Boost applicati. `KH2JokCombat_Forms.lua` scrive e verifica `0xFF`/255 quando Sora è pronto in forma base e lo ripristina dopo ogni ricostruzione di `Slot1`. Il target è il massimo assoluto rappresentabile dal campo; il contatore AP Boost della save non viene modificato.
+
+L'Ability Probe registra sia AP live sia AP Boost applicati, restando read-only. Gli AP non vengono resi persistenti nella save: dipendono intenzionalmente dal modulo attivo, mentre Form, ability e Drive continuano a seguire la loro ownership persistente esistente.
+
 ## Nucleo combo Sora
 
 | Abilità | ID | Copie target | Valore equipaggiato |

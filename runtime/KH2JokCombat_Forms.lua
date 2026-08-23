@@ -1,6 +1,6 @@
 LUAGUI_NAME = "KH2 JokCombat - Sora Forms"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Unlocks every Drive Form, maxes form progression and equips native form rewards"
+LUAGUI_DESC = "Unlocks every Drive Form, maxes form progression, Sora AP and native form rewards"
 
 local kh2lib = nil
 local CanExecute = false
@@ -22,6 +22,11 @@ local DRIVE_SAVE_MAX_OFFSET = 0x352A
 local DRIVE_LIVE_PERCENT_OFFSET = 0x1B0
 local DRIVE_LIVE_CURRENT_OFFSET = 0x1B1
 local DRIVE_LIVE_MAX_OFFSET = 0x1B2
+
+-- Slot1 stores Sora's live AP in one byte. 0xFF is therefore the absolute
+-- representable maximum and matches established KH2 Max AP patches.
+local SORA_LIVE_AP_OFFSET = 0x18E
+local SORA_MAX_AP = 0xFF
 
 local ABILITY_TABLE_OFFSET = 0x2544
 local STANDARD_ABILITY_SLOT_COUNT = 69
@@ -476,6 +481,20 @@ local function InspectDriveGauge(writes)
     AddWrite(writes, "byte", "Drive live percentuale", livePercentAddress, livePercentBefore, 100)
 end
 
+local function InspectSoraAp(writes)
+    local address = kh2lib.Slot1 + SORA_LIVE_AP_OFFSET
+    local before = ReadByte(address)
+
+    AddWrite(
+        writes,
+        "byte",
+        "Sora AP live",
+        address,
+        before,
+        SORA_MAX_AP
+    )
+end
+
 local function InspectFormRewards(writes)
     local abilityById = {}
     local matchesById = {}
@@ -569,6 +588,7 @@ local function BuildPatchPlan()
     InspectUnlocks(writes)
     InspectDriveForms(writes)
     InspectDriveGauge(writes)
+    InspectSoraAp(writes)
     InspectFormRewards(writes)
 
     return writes
@@ -704,6 +724,40 @@ local function VerifyDriveGauge()
     end
 end
 
+local function VerifySoraAp()
+    local current = ReadByte(kh2lib.Slot1 + SORA_LIVE_AP_OFFSET)
+
+    if current ~= SORA_MAX_AP then
+        error(string.format(
+            "Verifica Sora AP fallita: letti %d, attesi %d",
+            current,
+            SORA_MAX_AP
+        ))
+    end
+end
+
+local function EnsureSoraMaxAp()
+    local address = kh2lib.Slot1 + SORA_LIVE_AP_OFFSET
+    local before = ReadByte(address)
+
+    if before == SORA_MAX_AP then
+        return
+    end
+
+    WriteByte(address, SORA_MAX_AP)
+
+    local after = ReadByte(address)
+
+    if after ~= SORA_MAX_AP then
+        error(string.format(
+            "Ripristino Sora AP fallito: prima %d, dopo %d, attesi %d",
+            before,
+            after,
+            SORA_MAX_AP
+        ))
+    end
+end
+
 local function VerifyFormRewards()
     local equippedCounts = {}
 
@@ -748,10 +802,11 @@ local function EnableAllForms()
     VerifyUnlocks()
     VerifyDriveForms()
     VerifyDriveGauge()
+    VerifySoraAp()
     VerifyFormRewards()
 
     ConsolePrint(string.format(
-        "Sora Forms pronto: Valor/Wisdom/Limit/Master/Final LV7, Anti sbloccata, Drive 9/9 e ricompense Form equipaggiate (%d aggiornamenti).",
+        "Sora Forms pronto: Valor/Wisdom/Limit/Master/Final LV7, Anti sbloccata, Drive 9/9, AP 255 e ricompense Form equipaggiate (%d aggiornamenti).",
         #writes
     ), 1)
 
@@ -761,7 +816,7 @@ local function EnableAllForms()
     )
 
     ConsolePrint(
-        "Nota: lo stato e nella save RAM; salvando la partita diventa persistente.",
+        "Form, ability e Drive sono nella save RAM; gli AP live vengono ripristinati dal modulo a ogni caricamento di Sora.",
         2
     )
 
@@ -829,11 +884,23 @@ function _OnFrame()
         return
     end
 
-    if PatchCompleted then
+    if ReadByte(kh2lib.Save + CURRENT_FORM_OFFSET) ~= 0 then
         return
     end
 
-    if ReadByte(kh2lib.Save + CURRENT_FORM_OFFSET) ~= 0 then
+    if PatchCompleted then
+        local apOk, apError = pcall(EnsureSoraMaxAp)
+
+        if not apOk then
+            ConsolePrint(
+                "Errore ripristino Sora AP; modulo disabilitato fino a F1: "
+                .. tostring(apError),
+                3
+            )
+            ErrorReported = true
+            PatchDisabled = true
+        end
+
         return
     end
 
