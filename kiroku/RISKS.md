@@ -24,16 +24,38 @@ Square o il secondo salto possono tornare a produrre T-pose.
 Mitigazione:
 Il runtime le lascia visibili a MAX ma disabilitate; non equipaggiarle manualmente finché Sora usa il costume KH1.
 
-### Rischio: Valor ottenuto prima dei vestiti da un'altra mod
+### Rischio: Action avanzate nel MSET del costume KH1
 
 Condizione:
-Una randomizer o un'altra mod imposta `Save+0x36C0 & 0x02` durante il costume KH1.
+Una delle Action Ability sbloccate richiama una motion non disponibile o incompatibile in `P_EX100_KH1F.mset`.
 
 Impatto:
-Il proxy seleziona il profilo KH2 ed equipaggia prematuramente le quattro growth incompatibili.
+L'attacco può produrre T-pose, blocco temporaneo o una transizione errata, come già osservato con alcune growth.
 
 Mitigazione:
-Lo scope corrente è la progressione vanilla, dove Valor viene assegnato insieme ai vestiti KH2. Per integrazioni non vanilla servirà una guardia sul modello attivo o un segnale equivalente verificato.
+Provare le 19 Action operative una per volta dopo Build/F1, senza salvare finché il set non è validato. Non importare motion in massa: isolare prima l'Action e lo slot nativo responsabile.
+
+### Rischio: Form anticipate durante il costume KH1
+
+Condizione:
+Il giocatore usa Valor, Wisdom, Limit, Master, Final o Anti prima dell'evento dei vestiti KH2.
+
+Impatto:
+Modello, motion, weapon slot o transizioni potrebbero dipendere da stato di progressione non ancora validato in gameplay.
+
+Mitigazione:
+Il modulo usa bit e record nativi, preserva i weapon slot e garantisce gli array innate vanilla. Verificare ogni trasformazione e ritorno con una save di prova prima di salvare.
+
+### Rischio: Weapon slot Form non inizializzati
+
+Condizione:
+Una Form appena sbloccata possiede `Weapon=0` perché l'evento vanilla non è ancora avvenuto.
+
+Impatto:
+Le Form dual-wield potrebbero presentarsi senza un secondo Keyblade o richiedere equipaggiamento manuale.
+
+Mitigazione:
+Non assegnare armi non possedute. L'Ability Probe registra il weapon slot di ogni Form per decidere su dati reali dopo il primo test.
 
 ### Rischio: Conflitto con altri mod della tabella ability
 
@@ -86,10 +108,14 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 
 - Le cinque growth ability a livello MAX alterano intenzionalmente la progressione Sora; nel costume KH1 solo High Jump è equipaggiato.
 - Il nucleo combo `1 + 2 + 2` altera intenzionalmente la progressione delle support ability Sora.
+- Tutte le 25 Action Ability vengono anticipate; le sei Auto restano intenzionalmente disabilitate.
+- Tutte le Form, le innate e le ricompense di livello alterano intenzionalmente la progressione; Drive viene portato e riempito a 9/9.
 - L'MSET Roxas resta nel pacchetto come baseline chiusa anche durante il lavoro Sora.
 
 ## Rischi chiusi
 
+- Il budget AP insufficiente alle ricompense Form è coperto dal target live 255; `Save+0x24F8` resta intatto.
 - La possibile copia Combo Master già inserita dal vecchio runtime viene rilevata, riusata ed equipaggiata senza duplicarla.
 - L'ipotesi che l'import delle motion standard rendesse sicure le growth nel costume KH1 è stata falsificata dal gameplay; asset e manifest entry sono stati rimossi.
-- Lo sblocco di tutte le Drive Form come workaround della T-pose è escluso: Drive e Gauge erano già presenti e il problema seguiva le growth equipaggiate.
+- Lo sblocco delle Drive Form non è una correzione della T-pose: resta una funzione di progressione separata, mentre il problema segue le growth base equipaggiate.
+- Il rischio che Valor anticipato riattivi le growth base incompatibili è chiuso: Movement non legge più il bit Valor.

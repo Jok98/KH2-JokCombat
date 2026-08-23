@@ -1,6 +1,6 @@
 LUAGUI_NAME = "KH2 JokCombat - Ability Probe"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Read-only probe for Sora movement and combo-core abilities"
+LUAGUI_DESC = "Read-only probe for Sora movement, Drive Forms and standard abilities"
 
 local kh2lib = nil
 local CanExecute = false
@@ -15,6 +15,28 @@ local EQUIPPED_FLAG = 0x8000
 
 local SORA_STORY_FLAG_OFFSET = 0x1CEA
 local SORA_STORY_FLAG_MASK = 0x01
+
+local ITEM_SET_1_OFFSET = 0x36C0
+local ITEM_SET_1_FORM_MASK = 0x76
+local ITEM_SET_11_OFFSET = 0x36CA
+local ITEM_SET_11_LIMIT_MASK = 0x08
+local CURRENT_FORM_OFFSET = 0x3524
+local DRIVE_SAVE_CURRENT_OFFSET = 0x3529
+local DRIVE_SAVE_MAX_OFFSET = 0x352A
+local DRIVE_LIVE_PERCENT_OFFSET = 0x1B0
+local DRIVE_LIVE_CURRENT_OFFSET = 0x1B1
+local DRIVE_LIVE_MAX_OFFSET = 0x1B2
+local SORA_AP_BOOST_COUNT_OFFSET = 0x24F8
+local SORA_LIVE_AP_OFFSET = 0x18E
+local SORA_MAX_AP = 0xFF
+
+local DRIVE_FORMS = {
+    { name = "Valor", blockOffset = 0x32F4 },
+    { name = "Wisdom", blockOffset = 0x332C },
+    { name = "Limit", blockOffset = 0x3364 },
+    { name = "Master", blockOffset = 0x339C },
+    { name = "Final", blockOffset = 0x33D4 }
+}
 
 local MOVEMENT = {
     {
@@ -55,11 +77,39 @@ local MOVEMENT = {
 }
 
 local STANDARD_ABILITIES = {
-    { name = "Aerial Recovery", id = 0x009E },
-    { name = "Combo Master", id = 0x021B },
-    { name = "Combo Plus", id = 0x00A2 },
-    { name = "Air Combo Plus", id = 0x00A3 },
-    { name = "Finishing Plus", id = 0x0189 }
+    { name = "Guard", id = 0x0052, targetCount = 1, equipped = true },
+    { name = "Upper Slash", id = 0x0089, targetCount = 1, equipped = true },
+    { name = "Horizontal Slash", id = 0x010F, targetCount = 1, equipped = true },
+    { name = "Finishing Leap", id = 0x010B, targetCount = 1, equipped = true },
+    { name = "Retaliating Slash", id = 0x0111, targetCount = 1, equipped = true },
+    { name = "Slapshot", id = 0x0106, targetCount = 1, equipped = true },
+    { name = "Dodge Slash", id = 0x0107, targetCount = 1, equipped = true },
+    { name = "Flash Step", id = 0x022F, targetCount = 1, equipped = true },
+    { name = "Slide Dash", id = 0x0108, targetCount = 1, equipped = true },
+    { name = "Vicinity Break", id = 0x0232, targetCount = 1, equipped = true },
+    { name = "Guard Break", id = 0x0109, targetCount = 1, equipped = true },
+    { name = "Explosion", id = 0x010A, targetCount = 1, equipped = true },
+    { name = "Aerial Sweep", id = 0x010D, targetCount = 1, equipped = true },
+    { name = "Aerial Dive", id = 0x0230, targetCount = 1, equipped = true },
+    { name = "Aerial Spiral", id = 0x010E, targetCount = 1, equipped = true },
+    { name = "Aerial Finish", id = 0x0110, targetCount = 1, equipped = true },
+    { name = "Magnet Burst", id = 0x0231, targetCount = 1, equipped = true },
+    { name = "Counterguard", id = 0x010C, targetCount = 1, equipped = true },
+    { name = "Auto Valor", id = 0x0181, targetCount = 1, equipped = false },
+    { name = "Auto Wisdom", id = 0x0182, targetCount = 1, equipped = false },
+    { name = "Auto Limit", id = 0x0238, targetCount = 1, equipped = false },
+    { name = "Auto Master", id = 0x0183, targetCount = 1, equipped = false },
+    { name = "Auto Final", id = 0x0184, targetCount = 1, equipped = false },
+    { name = "Auto Summon", id = 0x0185, targetCount = 1, equipped = false },
+    { name = "Trinity Limit", id = 0x00C6, targetCount = 1, equipped = true },
+    { name = "Combo Master", id = 0x021B, targetCount = 1, equipped = true },
+    { name = "Combo Plus", id = 0x00A2, targetCount = 2, equipped = true },
+    { name = "Air Combo Plus", id = 0x00A3, targetCount = 2, equipped = true },
+    { name = "MP Rage", id = 0x019C, targetCount = 1, equipped = true },
+    { name = "MP Haste", id = 0x019D, targetCount = 1, equipped = true },
+    { name = "Draw", id = 0x0195, targetCount = 1, equipped = true },
+    { name = "Lucky Lucky", id = 0x0197, targetCount = 1, equipped = true },
+    { name = "Form Boost", id = 0x018E, targetCount = 2, equipped = true }
 }
 
 local function Hex(value, width)
@@ -129,6 +179,86 @@ local function LogGrowthAbilities()
     end
 end
 
+local function LogDriveForms()
+    local itemSet1 = ReadByte(kh2lib.Save + ITEM_SET_1_OFFSET)
+    local itemSet11 = ReadByte(kh2lib.Save + ITEM_SET_11_OFFSET)
+    local currentForm = ReadByte(kh2lib.Save + CURRENT_FORM_OFFSET)
+    local saveCurrent = ReadByte(kh2lib.Save + DRIVE_SAVE_CURRENT_OFFSET)
+    local saveMax = ReadByte(kh2lib.Save + DRIVE_SAVE_MAX_OFFSET)
+    local livePercent = ReadByte(kh2lib.Slot1 + DRIVE_LIVE_PERCENT_OFFSET)
+    local liveCurrent = ReadByte(kh2lib.Slot1 + DRIVE_LIVE_CURRENT_OFFSET)
+    local liveMax = ReadByte(kh2lib.Slot1 + DRIVE_LIVE_MAX_OFFSET)
+
+    ConsolePrint("=== DRIVE FORMS ===", 0)
+    ConsolePrint(string.format(
+        "Unlocks ItemSet1=%s target=%s ItemSet11=%s Limit=%s CurrentForm=%s",
+        Hex(itemSet1, 2),
+        (itemSet1 & ITEM_SET_1_FORM_MASK) == ITEM_SET_1_FORM_MASK
+            and "YES" or "NO",
+        Hex(itemSet11, 2),
+        (itemSet11 & ITEM_SET_11_LIMIT_MASK) == ITEM_SET_11_LIMIT_MASK
+            and "YES" or "NO",
+        Hex(currentForm, 2)
+    ), 0)
+    ConsolePrint(string.format(
+        "Drive save=%d/%d live=%d/%d percent=%d",
+        saveCurrent,
+        saveMax,
+        liveCurrent,
+        liveMax,
+        livePercent
+    ), 0)
+
+    for _, form in ipairs(DRIVE_FORMS) do
+        local weapon = ReadShort(kh2lib.Save + form.blockOffset)
+        local level = ReadByte(kh2lib.Save + form.blockOffset + 0x02)
+        local abilityLevel = ReadByte(kh2lib.Save + form.blockOffset + 0x03)
+        local experience = ReadInt(kh2lib.Save + form.blockOffset + 0x04)
+        local firstAbility = ReadShort(kh2lib.Save + form.blockOffset + 0x08)
+        local nonzeroAbilities = 0
+
+        for slot = 0, 23 do
+            if ReadShort(
+                kh2lib.Save + form.blockOffset + 0x08 + (slot * 2)
+            ) ~= 0 then
+                nonzeroAbilities = nonzeroAbilities + 1
+            end
+        end
+
+        ConsolePrint(string.format(
+            "%-7s Level=%d AbilityLevel=%d EXP=%d Weapon=%s FirstAbility=%s AbilitySlots=%d/24",
+            form.name,
+            level,
+            abilityLevel,
+            experience,
+            Hex(weapon, 4),
+            Hex(firstAbility, 4),
+            nonzeroAbilities
+        ), 0)
+    end
+
+    ConsolePrint(string.format(
+        "Anti    unlocked=%s innate PLRP=[0x80F8,0x80F9,0x8194] (index 5 e Summon)",
+        (itemSet1 & 0x20) ~= 0 and "YES" or "NO"
+    ), 0)
+end
+
+local function LogSoraAp()
+    local liveAp = ReadByte(kh2lib.Slot1 + SORA_LIVE_AP_OFFSET)
+    local appliedBoosts = ReadByte(
+        kh2lib.Save + SORA_AP_BOOST_COUNT_OFFSET
+    )
+
+    ConsolePrint("=== SORA AP ===", 0)
+    ConsolePrint(string.format(
+        "AP live=%d target=%d status=%s APBoost applicati(save)=%d [preservati]",
+        liveAp,
+        SORA_MAX_AP,
+        liveAp == SORA_MAX_AP and "MAX" or "LOW",
+        appliedBoosts
+    ), 0)
+end
+
 local function FindStandardAbility(targetId)
     local matches = {}
 
@@ -155,29 +285,43 @@ local function FindStandardAbility(targetId)
 end
 
 local function LogStandardAbilities()
-    ConsolePrint("=== COMBO CORE / STANDARD ===", 0)
+    ConsolePrint("=== SORA ACTION / COMBO / FORM REWARDS ===", 0)
 
     for _, ability in ipairs(STANDARD_ABILITIES) do
         local matches = FindStandardAbility(ability.id)
+        local equippedCount = 0
+        local slots = {}
 
-        if #matches == 0 then
-            ConsolePrint(string.format(
-                "%-16s ABSENT id=%s",
-                ability.name,
-                Hex(ability.id, 4)
-            ), 0)
-        else
-            for _, match in ipairs(matches) do
-                ConsolePrint(string.format(
-                    "%-16s %-8s id=%s value=%s slot=%d",
-                    ability.name,
-                    match.equipped and "EQUIPPED" or "PRESENT",
-                    Hex(ability.id, 4),
-                    Hex(match.value, 4),
-                    match.slot
-                ), 0)
+        for _, match in ipairs(matches) do
+            if match.equipped then
+                equippedCount = equippedCount + 1
             end
+
+            slots[#slots + 1] = string.format(
+                "%d:%s",
+                match.slot,
+                match.equipped and "ON" or "OFF"
+            )
         end
+
+        local shouldEquip = ability.equipped ~= false
+        local ready = #matches >= ability.targetCount
+            and (
+                (shouldEquip and equippedCount >= ability.targetCount)
+                or (not shouldEquip and equippedCount == 0)
+            )
+
+        ConsolePrint(string.format(
+            "%-18s %-8s id=%s target=%s x%d present=%d equipped=%d slots=[%s]",
+            ability.name,
+            ready and "READY" or "MISMATCH",
+            Hex(ability.id, 4),
+            shouldEquip and "ON" or "OFF",
+            ability.targetCount,
+            #matches,
+            equippedCount,
+            table.concat(slots, ",")
+        ), 0)
     end
 end
 
@@ -193,6 +337,8 @@ local function LogAbilitySnapshot()
         Hex(room, 2)
     ), 0)
 
+    LogSoraAp()
+    LogDriveForms()
     LogGrowthAbilities()
     LogStandardAbilities()
 
