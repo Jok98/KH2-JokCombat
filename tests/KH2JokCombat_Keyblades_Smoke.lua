@@ -68,6 +68,17 @@ function WriteByte(address, value)
     writeCount = writeCount + 1
 end
 
+function WriteShort(address, value)
+    writeAttempts = writeAttempts + 1
+
+    if address == failedWriteAddress then
+        return
+    end
+
+    memory[address] = value
+    writeCount = writeCount + 1
+end
+
 function ConsolePrint()
 end
 
@@ -113,10 +124,13 @@ memory[SLOT1 + 0x004] = 20
 memory[SAVE + 0x1CEA] = 0x01
 
 -- Equipped Keyblades count as owned and must not be duplicated in stock.
+-- Master and Final start empty, reproducing the early-unlock crash state.
 memory[SAVE + 0x24F0] = 0x0029
-memory[SAVE + 0x32F4] = 0x002B
+memory[SAVE + 0x32F4] = 0x01EE
 memory[SAVE + 0x332C] = 0x0047
 memory[SAVE + 0x35A2] = 2
+memory[SAVE + 0x35A3] = 1
+memory[SAVE + 0x368D] = 1
 memory[SAVE + 0x368F] = 4
 
 local weaponBefore = {}
@@ -132,14 +146,18 @@ _OnFrame()
 AssertAllTargetsAvailable()
 assert(memory[SAVE + 0x35A1] == nil, "equipped Kingdom Key was duplicated")
 assert(memory[SAVE + 0x35A2] == 2, "existing Oathkeeper count was overwritten")
-assert(memory[SAVE + 0x35A3] == nil, "equipped Oblivion was duplicated")
+assert(memory[SAVE + 0x3689] == nil, "equipped Sleeping Lion was duplicated")
+assert(memory[SAVE + 0x339C] == 0x01F2, "Master did not receive Bond of Flame")
+assert(memory[SAVE + 0x33D4] == 0x002B, "Final did not receive Oblivion")
+assert(memory[SAVE + 0x368D] == 0, "Master did not consume Bond of Flame stock")
+assert(memory[SAVE + 0x35A3] == 0, "Final did not consume Oblivion stock")
 assert(memory[SAVE + 0x368F] == 4, "Ultima Weapon inventory was modified")
-assert(writeCount == 20, "unexpected first-frame write count")
+assert(writeCount == 22, "unexpected first-frame write count")
 
-for _, offset in ipairs(WEAPON_SLOTS) do
+for _, offset in ipairs({ 0x24F0, 0x32F4, 0x332C, 0x3364 }) do
     assert(
         (memory[SAVE + offset] or 0) == weaponBefore[offset],
-        "weapon slot was modified"
+        "non-default weapon slot was modified"
     )
 end
 
@@ -155,6 +173,32 @@ memory[NOW + 0x00] = 0x02
 _OnFrame()
 assert(memory[SAVE + 0x367B] == 1, "load repair did not restore Star Seeker")
 assert(writeCount == writesAfterFirstFrame + 1, "load repair wrote unexpected data")
+
+-- Non-empty Master/Final slots are player choices and must be preserved.
+memory[SAVE + 0x339C] = 0x002A
+memory[SAVE + 0x33D4] = 0x01F3
+memory[SAVE + 0x35A2] = 1
+memory[SAVE + 0x368E] = 0
+memory[SAVE + 0x368D] = 1
+memory[SAVE + 0x35A3] = 1
+memory[NOW + 0x00] = 0xFF
+_OnFrame()
+memory[NOW + 0x00] = 0x02
+local writesBeforeManualPreservation = writeCount
+_OnFrame()
+assert(memory[SAVE + 0x339C] == 0x002A, "Master player choice was overwritten")
+assert(memory[SAVE + 0x33D4] == 0x01F3, "Final player choice was overwritten")
+assert(writeCount == writesBeforeManualPreservation, "preserving player choices wrote data")
+
+-- A later empty Master slot is repaired on F1 and consumes one stock copy.
+memory[SAVE + 0x339C] = 0
+memory[SAVE + 0x35A2] = 2
+_OnInit()
+local writesBeforeMasterRepair = writeCount
+_OnFrame()
+assert(memory[SAVE + 0x339C] == 0x01F2, "F1 did not restore Master default")
+assert(memory[SAVE + 0x368D] == 0, "Master repair did not consume Bond of Flame")
+assert(writeCount == writesBeforeMasterRepair + 2, "Master repair wrote unexpected data")
 
 -- Roxas identity must block every inventory write.
 memory[SAVE + 0x367C] = 0
@@ -183,7 +227,28 @@ _OnFrame()
 assert(memory[SAVE + 0x367C] == 1, "F1 did not re-enable repair")
 AssertAllTargetsAvailable()
 
+local successfulWriteCount = writeCount
+
+-- Never duplicate a default Keyblade already equipped elsewhere when no
+-- stock copy exists: reject the whole plan before its first write.
+memory = {}
+writeCount = 0
+writeAttempts = 0
+failedWriteAddress = nil
+memory[NOW + 0x00] = 0x02
+memory[NOW + 0x01] = 0x00
+memory[SLOT1 + 0x004] = 20
+memory[SAVE + 0x1CEA] = 0x01
+memory[SAVE + 0x32F4] = 0x01F2
+memory[SAVE + 0x35A3] = 1
+
+_OnInit()
+_OnFrame()
+assert(writeCount == 0, "duplicate-default conflict performed partial writes")
+assert(memory[SAVE + 0x339C] == nil, "duplicate-default conflict changed Master")
+assert(memory[SAVE + 0x32F4] == 0x01F2, "duplicate-default conflict changed Valor")
+
 print(string.format(
     "OK KH2JokCombat_Keyblades smoke test (23 targets, %d verified writes + guards)",
-    writeCount
+    successfulWriteCount
 ))

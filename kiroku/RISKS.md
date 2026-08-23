@@ -41,7 +41,7 @@ Condizione:
 La partita viene salvata dopo lo sblocco oppure una ricompensa vanilla concede più tardi una Keyblade già anticipata.
 
 Impatto:
-Le 23 armi restano possedute nella save e una ricompensa successiva può aumentare il relativo stock oltre una copia.
+Le 23 armi e i default Master/Final restano nella save; una ricompensa successiva può aumentare il relativo stock oltre una copia.
 
 Mitigazione:
 Usare una save di prova o backup. Il runtime non aumenta conteggi già positivi e considera possedute le armi equipaggiate, quindi non crea duplicati autonomamente dopo F1 o reload.
@@ -55,18 +55,18 @@ Impatto:
 Modello, motion, weapon slot o transizioni potrebbero dipendere da stato di progressione non ancora validato in gameplay.
 
 Mitigazione:
-Il modulo usa bit e record nativi, preserva i weapon slot e garantisce gli array innate vanilla. Verificare ogni trasformazione e ritorno con una save di prova prima di salvare.
+Forms usa bit e record nativi, preserva i weapon slot e garantisce gli array innate vanilla; Keyblades inizializza soltanto Master/Final a zero. Verificare ogni trasformazione e ritorno con una save di prova prima di salvare.
 
-### Rischio: Weapon slot Form non inizializzati
+### Rischio: Default weapon Form anticipati non ancora validati in gioco
 
 Condizione:
-Una Form appena sbloccata possiede `Weapon=0` perché l'evento vanilla non è ancora avvenuto.
+Dopo l'unlock anticipato, il modulo inizializza Master con Bond of Flame e Final con Oblivion prima dell'evento vanilla.
 
 Impatto:
-Le Form dual-wield potrebbero presentarsi senza un secondo Keyblade o richiedere equipaggiamento manuale.
+Il menu dovrebbe evitare lo stato nullo che causava crash, ma trasformazione, cambio manuale e persistenza dei due loadout richiedono ancora conferma gameplay.
 
 Mitigazione:
-Non assegnare armi non possedute. L'Ability Probe registra il weapon slot di ogni Form per decidere su dati reali dopo il primo test.
+Scrivere soltanto slot zero, consumare la copia in stock quando presente, preservare qualunque scelta nonzero e fallire prima delle write se il default è già equipaggiato altrove senza stock. Il probe riporta `READY`, `EMPTY` o `CUSTOM`; testare menu e trasformazioni prima di salvare.
 
 ### Rischio: Conflitto con altri mod della tabella ability
 
@@ -121,7 +121,7 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 - Il nucleo combo `1 + 2 + 2` altera intenzionalmente la progressione delle support ability Sora.
 - Tutte le 25 Action Ability vengono anticipate; le sei Auto restano intenzionalmente disabilitate.
 - Tutte le Form, le innate e le ricompense di livello alterano intenzionalmente la progressione; Drive viene portato e riempito a 9/9.
-- Le 23 Keyblade standard diverse da Ultima Weapon vengono anticipate e persistono nella save; eventuali ricompense vanilla successive possono aggiungere copie.
+- Le 23 Keyblade standard diverse da Ultima Weapon e i default Bond of Flame/Oblivion per Master/Final vengono anticipati e persistono nella save; eventuali ricompense vanilla successive possono aggiungere copie.
 - L'MSET Roxas resta nel pacchetto come baseline chiusa anche durante il lavoro Sora.
 
 ## Rischi chiusi

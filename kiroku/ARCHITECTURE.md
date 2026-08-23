@@ -34,16 +34,16 @@ Il pacchetto non sostituisce più `P_EX100_KH1F.mset`: l'import di sette motion 
 
 ## Drive Form Sora
 
-| Form | Bit unlock | Record save | Stato target | Prima ability |
-| --- | --- | --- | --- | --- |
-| Valor | `ItemSet1 0x02` | `0x32F4` | Level 7, AbilityLevel 4 | High Jump MAX `0x8061` |
-| Wisdom | `ItemSet1 0x04` | `0x332C` | Level 7, AbilityLevel 4 | Quick Run MAX `0x8065` |
-| Limit | `ItemSet11 0x08` | `0x3364` | Level 7, AbilityLevel 4 | Dodge Roll MAX `0x8237` |
-| Master | `ItemSet1 0x40` | `0x339C` | Level 7, AbilityLevel 4 | Aerial Dodge MAX `0x8069` |
-| Final | `ItemSet1 0x10` | `0x33D4` | Level 7, AbilityLevel 4 | Glide MAX `0x806D` |
-| Anti | `ItemSet1 0x20` | nessuno | solo unlock; innate PLRP native | nessuna write record |
+| Form | Bit unlock | Record save | Stato target | Prima ability | Default arma se vuoto |
+| --- | --- | --- | --- | --- | --- |
+| Valor | `ItemSet1 0x02` | `0x32F4` | Level 7, AbilityLevel 4 | High Jump MAX `0x8061` | preservato |
+| Wisdom | `ItemSet1 0x04` | `0x332C` | Level 7, AbilityLevel 4 | Quick Run MAX `0x8065` | preservato |
+| Limit | `ItemSet11 0x08` | `0x3364` | Level 7, AbilityLevel 4 | Dodge Roll MAX `0x8237` | preservato |
+| Master | `ItemSet1 0x40` | `0x339C` | Level 7, AbilityLevel 4 | Aerial Dodge MAX `0x8069` | Bond of Flame `0x01F2` |
+| Final | `ItemSet1 0x10` | `0x33D4` | Level 7, AbilityLevel 4 | Glide MAX `0x806D` | Oblivion `0x002B` |
+| Anti | `ItemSet1 0x20` | nessuno | solo unlock; innate PLRP native | nessuna write record | nessuno |
 
-Ogni record Final Mix è lungo `0x38` byte: weapon `+0`, Level `+2`, AbilityLevel `+3`, EXP `+4`, 24 ability short da `+8`. Il modulo valida Level/AbilityLevel/EXP e il primo slot growth prima della prima write; poi riusa/equipaggia le innate esistenti, aggiunge soltanto quelle mancanti e preserva extra e weapon slot. I target dei cinque record derivano dalle righe PLRP vanilla 129–133. La riga 134 descrive Anti, ma OpenKH conferma che `DriveForms[5]` è Summon: `0x340C` non viene quindi toccato.
+Ogni record Final Mix è lungo `0x38` byte: weapon `+0`, Level `+2`, AbilityLevel `+3`, EXP `+4`, 24 ability short da `+8`. Forms valida Level/AbilityLevel/EXP e il primo slot growth prima della prima write; poi riusa/equipaggia le innate esistenti, aggiunge soltanto quelle mancanti e non scrive il campo weapon. Il modulo Keyblade possiede separatamente l'inizializzazione minima dei soli weapon slot Master/Final a zero. I target dei cinque record derivano dalle righe PLRP vanilla 129–133. La riga 134 descrive Anti, ma OpenKH conferma che `DriveForms[5]` è Summon: `0x340C` non viene quindi toccato.
 
 I bit vengono aggiunti con OR: `Save+0x36C0 |= 0x76` e `Save+0x36CA |= 0x08`, senza rimuovere item estranei. Drive persistente usa `Save+0x3529/0x352A`; lo stato live usa `Slot1+0x1B0..0x1B2`. Il target è percentuale `100`, corrente `9`, massimo `9`, applicato solo con Sora in forma base.
 
@@ -57,11 +57,13 @@ L'Ability Probe registra sia AP live sia AP Boost applicati, restando read-only.
 
 ## Inventario Keyblade Sora
 
-OpenKH descrive `InventoryCount` come 320 byte da `Save+0x3580`. `KH2JokCombat_Keyblades.lua` possiede soltanto i 23 conteggi delle Keyblade standard di Sora diverse da Ultima Weapon: Kingdom Key, Oathkeeper, Oblivion, le 18 armi standard da Star Seeker a Fenrir, Two Become One e Winner's Proof.
+OpenKH descrive `InventoryCount` come 320 byte da `Save+0x3580`. `KH2JokCombat_Keyblades.lua` possiede i 23 conteggi delle Keyblade standard di Sora diverse da Ultima Weapon e l'inizializzazione condizionale dei due weapon slot dual-wield anticipati: Master `Save+0x339C` e Final `Save+0x33D4`.
 
-Prima di scrivere, il modulo legge anche il weapon slot base `Save+0x24F0` e i cinque slot secondari Form `Save+0x32F4`, `0x332C`, `0x3364`, `0x339C`, `0x33D4`. Una Keyblade con stock maggiore di zero o presente in uno di questi slot è già posseduta; solo un target con stock zero e non equipaggiato riceve conteggio `1`. Questo evita duplicazioni dopo F1 o reload.
+Prima di scrivere, il modulo legge il weapon slot base `Save+0x24F0` e i cinque slot secondari Form `Save+0x32F4`, `0x332C`, `0x3364`, `0x339C`, `0x33D4`. Se Master è zero pianifica Bond of Flame `0x01F2`; se Final è zero pianifica Oblivion `0x002B`. Quando una copia è nello stock, il conteggio viene decrementato mentre l'arma passa nello slot; se la stessa arma è già equipaggiata altrove e non esiste stock, il piano fallisce prima della prima write invece di duplicarla.
 
-Ultima Weapon (`ID 0x01F4`, `Save+0x368F`) viene letta soltanto per verificarne la preservazione. Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D non appartengono al pool standard richiesto. Nessun weapon slot viene scritto.
+Dopo i default, una Keyblade con stock maggiore di zero o presente in uno dei sei slot è posseduta; solo un target ancora assente riceve conteggio `1`. Slot Master/Final non vuoti sono scelte del giocatore e restano invariati, così come Sora, Valor, Wisdom e Limit. Questo rende idempotenti F1/reload e consente al giocatore di cambiare successivamente i due default.
+
+Ultima Weapon (`ID 0x01F4`, `Save+0x368F`) viene letta soltanto per verificarne la preservazione. Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D non appartengono al pool standard richiesto. Nessun altro weapon slot viene scritto.
 
 ## Combat Core Sora
 

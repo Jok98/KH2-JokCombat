@@ -1,6 +1,6 @@
 LUAGUI_NAME = "KH2 JokCombat - Sora Keyblades"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Unlocks every standard Sora Keyblade except Ultima Weapon"
+LUAGUI_DESC = "Unlocks Sora Keyblades and initializes empty Master/Final weapon slots"
 
 local kh2lib = nil
 local CanExecute = false
@@ -65,6 +65,23 @@ for _, keyblade in ipairs(KEYBLADES) do
     TARGET_BY_ID[keyblade.id] = keyblade
 end
 
+-- Master and Final are dual-wield Forms. Unlocking them before the vanilla
+-- progression event can leave their persistent secondary weapon slot empty,
+-- which makes the equipment menu unsafe. Only initialize an empty slot: once
+-- the player has selected any weapon, that choice remains authoritative.
+local FORM_WEAPON_DEFAULTS = {
+    {
+        slotName = "Master",
+        slotOffset = 0x339C,
+        keyblade = TARGET_BY_ID[0x01F2] -- Bond of Flame
+    },
+    {
+        slotName = "Final",
+        slotOffset = 0x33D4,
+        keyblade = TARGET_BY_ID[0x002B] -- Oblivion
+    }
+}
+
 local function Hex(value, width)
     return string.format("0x%0" .. tostring(width) .. "X", value or 0)
 end
@@ -85,16 +102,20 @@ end
 local function SnapshotWeaponSlots()
     local equippedById = {}
     local snapshots = {}
+    local snapshotByOffset = {}
 
     for _, slot in ipairs(WEAPON_SLOTS) do
         local address = kh2lib.Save + slot.offset
         local value = ReadShort(address)
 
-        snapshots[#snapshots + 1] = {
+        local snapshot = {
             slot = slot,
             address = address,
             before = value
         }
+
+        snapshots[#snapshots + 1] = snapshot
+        snapshotByOffset[slot.offset] = snapshot
 
         if TARGET_BY_ID[value] ~= nil then
             equippedById[value] = equippedById[value] or {}
@@ -102,50 +123,131 @@ local function SnapshotWeaponSlots()
         end
     end
 
-    return equippedById, snapshots
+    return equippedById, snapshots, snapshotByOffset
 end
 
 local function BuildPatchPlan()
-    local equippedById, weaponSnapshots = SnapshotWeaponSlots()
-    local writes = {}
+    local equippedById, weaponSnapshots, snapshotByOffset =
+        SnapshotWeaponSlots()
+    local inventoryBeforeById = {}
+    local inventoryDesiredById = {}
+    local weaponWrites = {}
+    local expectedWeaponByOffset = {}
+    local defaultStatuses = {}
+    local inventoryWrites = {}
+    local unlockedNames = {}
     local alreadyAvailable = 0
 
     for _, keyblade in ipairs(KEYBLADES) do
         local address = kh2lib.Save + keyblade.inventoryOffset
         local count = ReadByte(address)
+
+        inventoryBeforeById[keyblade.id] = count
+        inventoryDesiredById[keyblade.id] = count
+    end
+
+    for _, default in ipairs(FORM_WEAPON_DEFAULTS) do
+        local snapshot = snapshotByOffset[default.slotOffset]
+
+        if snapshot == nil then
+            error("Weapon slot Form non censito: " .. default.slotName)
+        end
+
+        if snapshot.before == 0 then
+            local keybladeId = default.keyblade.id
+            local stock = inventoryDesiredById[keybladeId]
+            local equippedElsewhere = equippedById[keybladeId]
+
+            if stock == 0 and equippedElsewhere ~= nil then
+                error(string.format(
+                    "%s non inizializzabile: %s e gia equipaggiata in [%s] e non esiste una copia in stock",
+                    default.slotName,
+                    default.keyblade.name,
+                    table.concat(equippedElsewhere, ",")
+                ))
+            end
+
+            weaponWrites[#weaponWrites + 1] = {
+                default = default,
+                address = snapshot.address,
+                before = snapshot.before,
+                desired = default.keyblade.id
+            }
+            expectedWeaponByOffset[default.slotOffset] = default.keyblade.id
+
+            if stock > 0 then
+                inventoryDesiredById[keybladeId] = stock - 1
+            end
+
+            equippedById[keybladeId] = equippedById[keybladeId] or {}
+            equippedById[keybladeId][#equippedById[keybladeId] + 1] =
+                default.slotName
+
+            defaultStatuses[#defaultStatuses + 1] = string.format(
+                "%s=%s [inizializzata]",
+                default.slotName,
+                default.keyblade.name
+            )
+        else
+            expectedWeaponByOffset[default.slotOffset] = snapshot.before
+            local current = TARGET_BY_ID[snapshot.before]
+
+            defaultStatuses[#defaultStatuses + 1] = string.format(
+                "%s=%s [preservata]",
+                default.slotName,
+                current and current.name or Hex(snapshot.before, 4)
+            )
+        end
+    end
+
+    for _, keyblade in ipairs(KEYBLADES) do
+        local before = inventoryBeforeById[keyblade.id]
+        local desired = inventoryDesiredById[keyblade.id]
         local equipped = equippedById[keyblade.id] ~= nil
 
-        if count == 0 and not equipped then
-            writes[#writes + 1] = {
-                keyblade = keyblade,
-                address = address,
-                before = count,
-                desired = 1
-            }
+        if desired == 0 and not equipped then
+            desired = 1
+            inventoryDesiredById[keyblade.id] = desired
+            unlockedNames[#unlockedNames + 1] = keyblade.name
         else
             alreadyAvailable = alreadyAvailable + 1
+        end
+
+        if desired ~= before then
+            inventoryWrites[#inventoryWrites + 1] = {
+                keyblade = keyblade,
+                address = kh2lib.Save + keyblade.inventoryOffset,
+                before = before,
+                desired = desired
+            }
         end
     end
 
     return {
-        writes = writes,
+        weaponWrites = weaponWrites,
+        inventoryWrites = inventoryWrites,
+        unlockedNames = unlockedNames,
         alreadyAvailable = alreadyAvailable,
         weaponSnapshots = weaponSnapshots,
+        expectedWeaponByOffset = expectedWeaponByOffset,
+        defaultStatuses = defaultStatuses,
         ultimaBefore = ReadByte(
             kh2lib.Save + ULTIMA_WEAPON.inventoryOffset
         )
     }
 end
 
-local function VerifyUnchangedOwnership(plan)
+local function VerifyOwnership(plan)
     for _, snapshot in ipairs(plan.weaponSnapshots) do
         local after = ReadShort(snapshot.address)
+        local expected = plan.expectedWeaponByOffset[snapshot.slot.offset]
+            or snapshot.before
 
-        if after ~= snapshot.before then
+        if after ~= expected then
             error(string.format(
-                "Weapon slot %s cambiato durante la patch: %s -> %s",
+                "Weapon slot %s inatteso dopo la patch: atteso %s, trovato %s",
                 snapshot.slot.name,
-                Hex(snapshot.before, 4),
+                Hex(expected, 4),
                 Hex(after, 4)
             ))
         end
@@ -182,8 +284,21 @@ local function ApplyKeybladeInventory()
     local plan = BuildPatchPlan()
 
     -- Recheck every value before the first write. If another mod changes one
-    -- of the missing entries between inspection and application, fail closed.
-    for _, write in ipairs(plan.writes) do
+    -- of the inspected slots between planning and application, fail closed.
+    for _, write in ipairs(plan.weaponWrites) do
+        local current = ReadShort(write.address)
+
+        if current ~= write.before then
+            error(string.format(
+                "Weapon slot %s cambiato prima della patch: %s -> %s",
+                write.default.slotName,
+                Hex(write.before, 4),
+                Hex(current, 4)
+            ))
+        end
+    end
+
+    for _, write in ipairs(plan.inventoryWrites) do
         local current = ReadByte(write.address)
 
         if current ~= write.before then
@@ -196,9 +311,22 @@ local function ApplyKeybladeInventory()
         end
     end
 
-    local addedNames = {}
+    for _, write in ipairs(plan.weaponWrites) do
+        WriteShort(write.address, write.desired)
 
-    for _, write in ipairs(plan.writes) do
+        local after = ReadShort(write.address)
+
+        if after ~= write.desired then
+            error(string.format(
+                "Verifica weapon slot %s fallita a Save+%s: %s",
+                write.default.slotName,
+                Hex(write.default.slotOffset, 4),
+                Hex(after, 4)
+            ))
+        end
+    end
+
+    for _, write in ipairs(plan.inventoryWrites) do
         WriteByte(write.address, write.desired)
 
         local after = ReadByte(write.address)
@@ -211,25 +339,31 @@ local function ApplyKeybladeInventory()
                 after
             ))
         end
-
-        addedNames[#addedNames + 1] = write.keyblade.name
     end
 
-    VerifyUnchangedOwnership(plan)
+    VerifyOwnership(plan)
     VerifyTargets()
 
     ConsolePrint(string.format(
         "Keyblade Sora pronte: 23/23 standard, %d aggiunte e %d gia possedute/equipaggiate.",
-        #plan.writes,
+        #plan.unlockedNames,
         plan.alreadyAvailable
     ), 1)
 
-    if #addedNames > 0 then
-        ConsolePrint("Aggiunte: " .. table.concat(addedNames, ", "), 1)
+    if #plan.unlockedNames > 0 then
+        ConsolePrint(
+            "Aggiunte: " .. table.concat(plan.unlockedNames, ", "),
+            1
+        )
     end
 
+    ConsolePrint(
+        "Weapon slot Form: " .. table.concat(plan.defaultStatuses, "; "),
+        1
+    )
+
     ConsolePrint(string.format(
-        "Ultima Weapon esclusa e preservata (stock=%d); weapon slot Sora/Form invariati.",
+        "Ultima Weapon esclusa e preservata (stock=%d); gli slot non vuoti restano invariati.",
         plan.ultimaBefore
     ), 2)
 

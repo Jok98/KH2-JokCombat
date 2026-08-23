@@ -7,12 +7,13 @@
 Status: ongoing
 
 Completamento:
-Dopo OpenKH Build e F1, il menu mostra tutte le 23 Keyblade standard richieste, Ultima Weapon non viene aggiunta e le armi già equipaggiate su Sora/Form non vengono duplicate o sostituite.
+Dopo OpenKH Build e F1, il menu mostra tutte le 23 Keyblade standard richieste, Master usa Bond of Flame e Final usa Oblivion quando i rispettivi slot erano vuoti; aprire/cambiare entrambi non causa crash, Ultima non viene aggiunta e nessuna arma viene duplicata o sostituita.
 
 Note:
-- `KH2JokCombat_Keyblades.lua` scrive solo conteggi inventario mancanti e usa i sei weapon slot come ownership read-only.
+- `KH2JokCombat_Keyblades.lua` pianifica insieme inventario e due default: scrive Master/Final solo da zero e preserva ogni slot non vuoto.
+- Bond of Flame/Oblivion vengono trasferite dallo stock allo slot quando la copia esiste; un conflitto senza copia disponibile fallisce prima della prima write.
 - Il pool esclude esplicitamente Ultima Weapon, armi Struggle, Alpha/Omega Weapon, Pureblood e Kingdom Key D.
-- Smoke test Lupa: 23 target, preservazione di stock/weapon slot/Ultima, idempotenza, riparazione dopo load, guardia Roxas e disabilitazione su verifica fallita.
+- Smoke test Fengari: 23 target, default Master/Final, consumo stock, scelta manuale preservata, conflitto senza duplicazione, idempotenza, riparazione dopo load, guardia Roxas e verifica fallita.
 
 ### Attività: Sbloccare tutte le Action Ability Sora
 

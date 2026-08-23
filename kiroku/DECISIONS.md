@@ -49,7 +49,7 @@ Conseguenze:
 - I bit Form sono aggiunti con OR, preservando gli altri item di `ItemSet1` e `ItemSet11`.
 - Valor, Wisdom, Limit, Master e Final diventano Level 7/AbilityLevel 4/EXP 0; Anti riceve soltanto il bit unlock perché non possiede un record Drive Form nella save.
 - Le 24 ability slot per Form preservano extra non riconosciuti e aggiungono/equipaggiano solo target vanilla mancanti.
-- I weapon slot Form sono osservati dal probe ma non modificati.
+- Forms non scrive i weapon slot; il modulo Keyblade inizializza separatamente soltanto Master/Final se vuoti, secondo la decisione dedicata agli equipaggiamenti.
 - `DriveForms[5]` Final Mix è Summon e resta completamente intatto; le innate Anti sono già dati nativi PLRP, non stato da copiare nella save.
 - Le ricompense standard condivise Combo Plus/Air Combo Plus hanno gli stessi target del Combo Core e restano idempotenti in qualunque ordine di caricamento.
 
@@ -108,13 +108,16 @@ Status: active
 Area: progression
 
 Decisione:
-Garantire subito le 23 Keyblade standard di Sora diverse da Ultima Weapon, senza includere armi debug, Struggle o dummy Form e senza modificare gli slot arma esistenti.
+Garantire subito le 23 Keyblade standard di Sora diverse da Ultima Weapon. Se i weapon slot anticipati sono vuoti, inizializzare Master con Bond of Flame e Final con Oblivion; non includere armi debug, Struggle o dummy Form e non sovrascrivere alcuno slot non vuoto.
 
 Rationale:
-Il giocatore deve poter sperimentare liberamente armi e relative ability durante il nuovo workstream Sora, mantenendo Ultima Weapon come eccezione esplicita. Contare anche le armi già equipaggiate evita copie artificiali dopo F1 o reload.
+Il giocatore deve poter sperimentare liberamente armi e relative ability durante il nuovo workstream Sora, mantenendo Ultima Weapon come eccezione esplicita. Lo sblocco anticipato lasciava Master/Final con weapon `0`, mostrato come `? ----`, e aprire il selettore poteva causare crash; assegnare default validi elimina lo stato nullo. Contare anche le armi equipaggiate e trasferire la copia dallo stock evita duplicazioni dopo F1 o reload.
 
 Conseguenze:
 - Solo i target con stock zero e non presenti nei weapon slot Sora/Form ricevono conteggio `1`.
+- Master `Save+0x339C == 0` riceve Bond of Flame `0x01F2`; Final `Save+0x33D4 == 0` riceve Oblivion `0x002B`.
+- Se il default esiste nello stock, il conteggio diminuisce di uno; se è già equipaggiato altrove senza una copia disponibile, il piano fallisce prima delle write.
+- Ogni valore nonzero in Master/Final e tutti gli slot Sora/Valor/Wisdom/Limit restano invariati, quindi una scelta manuale successiva non viene annullata.
 - Ultima Weapon viene osservata e preservata, non concessa né rimossa se già posseduta.
 - Winner's Proof e Two Become One fanno parte del pool standard; Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D restano escluse.
 - La progressione vanilla delle 23 Keyblade viene intenzionalmente anticipata e diventa persistente salvando la partita.

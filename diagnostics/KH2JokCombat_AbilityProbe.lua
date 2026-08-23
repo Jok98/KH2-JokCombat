@@ -79,6 +79,21 @@ local KEYBLADE_WEAPON_SLOTS = {
     { name = "Final", offset = 0x33D4 }
 }
 
+local FORM_WEAPON_DEFAULTS = {
+    {
+        formName = "Master",
+        offset = 0x339C,
+        keybladeName = "Bond of Flame",
+        keybladeId = 0x01F2
+    },
+    {
+        formName = "Final",
+        offset = 0x33D4,
+        keybladeName = "Oblivion",
+        keybladeId = 0x002B
+    }
+}
+
 local MOVEMENT = {
     {
         name = "High Jump",
@@ -275,6 +290,21 @@ local function LogDriveForms()
             Hex(weapon, 4),
             Hex(firstAbility, 4),
             nonzeroAbilities
+        ), 0)
+    end
+
+    for _, default in ipairs(FORM_WEAPON_DEFAULTS) do
+        local weapon = ReadShort(kh2lib.Save + default.offset)
+        local status = weapon == default.keybladeId and "READY"
+            or (weapon == 0 and "EMPTY" or "CUSTOM")
+
+        ConsolePrint(string.format(
+            "%-7s weapon default=%s target=%s current=%s status=%s",
+            default.formName,
+            default.keybladeName,
+            Hex(default.keybladeId, 4),
+            Hex(weapon, 4),
+            status
         ), 0)
     end
 

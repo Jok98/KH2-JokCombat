@@ -9,3 +9,4 @@
 - 2026-08-23: Combat Core esteso alle 25 Action Sora; 19 azioni operative ON, sei Auto presenti/OFF e support combo invariati, con probe e smoke test dedicati.
 - 2026-08-23: aggiunto lo sblocco delle 23 Keyblade standard con Ultima Weapon esclusa, deduplica rispetto ai weapon slot Sora/Form e probe/smoke test dedicati.
 - 2026-08-23: corretto Movement: il fallback KH1 non aveva alcuna transizione e disabilitava quattro growth dopo ogni F1; ora tutte e cinque convergono su MAX/ON, con regressione dedicata al reload di Quick Run e rischio KH1 esplicito.
+- 2026-08-23: corretti gli slot nulli delle Form anticipate: Master riceve Bond of Flame e Final Oblivion solo da zero, con trasferimento dello stock, preservazione delle scelte manuali e regressioni anti-duplicazione.
