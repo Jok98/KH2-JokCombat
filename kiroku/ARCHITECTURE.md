@@ -65,6 +65,12 @@ Dopo i default, una Keyblade con stock maggiore di zero o presente in uno dei se
 
 Ultima Weapon (`ID 0x01F4`, `Save+0x368F`) viene letta soltanto per verificarne la preservazione. Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D non appartengono al pool standard richiesto. Nessun altro weapon slot viene scritto.
 
+## Cost Limit Gummi
+
+`KH2JokCombat_GummiCost.lua` possiede un solo byte persistente, `Save+0x10F0A`, che rappresenta il livello del limite costo del Gummi editor. Accetta il range documentato `0..6` e converge su `6`, equivalente a Cost Limit 1200; non modifica inventario dei blocchi, progressione missioni, costo già usato né limite Teeny Ship.
+
+Il modulo non richiede `Slot1`, perché nel Gummi Garage non esiste un attore Sora live: verifica invece una save Sora caricata tramite `Save+0x1CEA & 0x01` e `Now` valido. Rilegge il byte immediatamente prima e dopo ogni write, ripara eventuali riscritture vanilla inferiori e, davanti a un valore superiore a `6`, preserva lo stato estraneo e si disabilita fino a F1. Il target non viene elevato oltre 1200 perché i valori fuori range possono produrre progetti invalidi all'avvio missione.
+
 ## Combat Core Sora
 
 `KH2JokCombat_ComboMaster.lua` mantiene il nome file storico ma possiede l'intero pool Action standard di Sora e il nucleo combo. Gli ID derivano dalla lista Final Mix usata dal Randomizer:

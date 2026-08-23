@@ -122,6 +122,22 @@ Conseguenze:
 - Winner's Proof e Two Become One fanno parte del pool standard; Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D restano escluse.
 - La progressione vanilla delle 23 Keyblade viene intenzionalmente anticipata e diventa persistente salvando la partita.
 
+### Decisione: Cost Limit Gummi al massimo sicuro 1200
+
+Status: active
+Area: gummi
+
+Decisione:
+Mantenere il livello Max Allowed Cost a `6`, equivalente a Cost Limit 1200, senza tentare valori 9999 o un bypass illimitato e senza modificare inventario, missioni o Teeny Ship.
+
+Rationale:
+Il byte persistente verificato espone il range noto fino a `6`; 1200 è il massimo supportato dai due Cost Converter nativi. Valori superiori sono fuori range e possono generare navi invalide o fallimenti all'avvio missione.
+
+Conseguenze:
+- `KH2JokCombat_GummiCost.lua` possiede soltanto `Save+0x10F0A` e ripristina `6` se la progressione vanilla scrive un livello inferiore.
+- Ogni valore `>6` viene preservato e causa disattivazione fail-closed fino a F1.
+- Il valore diventa persistente salvando la partita; la prova gameplay deve coprire editor, salvataggio blueprint e avvio missione con costo superiore a 600.
+
 ### Decisione: Clone OpenKH come working copy canonica
 
 Status: active

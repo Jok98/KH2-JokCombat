@@ -10,3 +10,4 @@
 - 2026-08-23: aggiunto lo sblocco delle 23 Keyblade standard con Ultima Weapon esclusa, deduplica rispetto ai weapon slot Sora/Form e probe/smoke test dedicati.
 - 2026-08-23: corretto Movement: il fallback KH1 non aveva alcuna transizione e disabilitava quattro growth dopo ogni F1; ora tutte e cinque convergono su MAX/ON, con regressione dedicata al reload di Quick Run e rischio KH1 esplicito.
 - 2026-08-23: corretti gli slot nulli delle Form anticipate: Master riceve Bond of Flame e Final Oblivion solo da zero, con trasferimento dello stock, preservazione delle scelte manuali e regressioni anti-duplicazione.
+- 2026-08-23: aggiunto il Cost Limit Gummi al massimo sicuro 1200 tramite `Save+0x10F0A = 6`, senza modificare blocchi, missioni o Teeny Ship, con verifica post-write e regressioni fail-closed.

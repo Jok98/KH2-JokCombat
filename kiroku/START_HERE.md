@@ -12,19 +12,19 @@
 - `KH2JokCombat_ComboMaster.lua` è ora il Sora Combat Core: garantisce tutte le 25 Action Ability, ne equipaggia 19 e mantiene le sei Auto presenti ma disabilitate; Combo Master x1, Combo Plus x2 e Air Combo Plus x2 restano attivi.
 - `KH2JokCombat_Forms.lua` sblocca tutte le Form, massimizza le cinque progressioni normali, garantisce innate e ricompense vanilla, porta Drive a 9/9 e mantiene gli AP live di Sora a 255; le Auto Form restano disabilitate.
 - `KH2JokCombat_Keyblades.lua` garantisce le 23 Keyblade standard senza duplicazioni e inizializza gli slot vuoti Master/Final con Bond of Flame/Oblivion; slot non vuoti e Ultima restano preservati.
+- `KH2JokCombat_GummiCost.lua` mantiene `Save+0x10F0A` al livello `6`, cioè Cost Limit 1200, senza modificare blocchi, missioni o Teeny Ship; valori superiori estranei vengono preservati fail-closed.
 - Il test gameplay ha confermato che importare sette ANB da `P_EX100.mset` nel MSET KH1 non risolve la T-pose su Square e secondo salto; l'esperimento è stato rimosso dal pacchetto.
 
 ## Prossima azione
 
 - Eseguire Build dalla clone OpenKH canonica e F1 in forma base Sora.
-- Nel menu verificare che tutte e cinque le growth siano MAX e ON, quindi premere di nuovo F1 e controllare che Quick Run, Dodge Roll, Aerial Dodge e Glide restino ON.
-- Verificare Form, Drive 9/9, AP 255, livelli 7, innate e ricompense; Master/Final devono mostrare Bond of Flame/Oblivion senza crash, con 23 Keyblade standard disponibili, Ultima esclusa e sei Auto OFF.
+- Verificare growth MAX/ON anche dopo un secondo F1, Form/Drive/AP/Keyblade/Auto, poi nel Gummi Garage confermare `Cost Limit 1200`, salvare un progetto oltre 600 e avviare una missione.
 
 ## Vincoli rigidi
 
 - Non riaprire il workstream Roxas salvo regressione esplicita.
 - Preferire PTYA, MSET, ANB e ATKP nativi alla ricostruzione Lua del combat.
-- Ogni write deve verificare identità, valore precedente e valore scritto; valori estranei devono fallire chiusi.
+- Ogni write deve verificare identità, valore precedente e valore scritto; Gummi accetta solo livelli `0..6` e preserva fail-closed valori superiori estranei.
 - Il flag `Save+0x1CEA & 0x01` separa Sora da Roxas per le scritture legate al personaggio.
 - Livelli e stato equipaggiato di growth/support ability risiedono nella save RAM e diventano persistenti se la partita viene salvata.
 - Movement non deve mai rimuovere silenziosamente il bit equipaggiato dalle growth; un eventuale profilo KH1 futuro richiede prima un segnale diretto e verificato del modello attivo.

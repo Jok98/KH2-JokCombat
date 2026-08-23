@@ -2,6 +2,19 @@
 
 ## In corso
 
+### Attività: Portare il Cost Limit Gummi al massimo sicuro
+
+Status: ongoing
+
+Completamento:
+Dopo OpenKH Build e F1, il Gummi Garage mostra Cost Limit 1200, permette di salvare un progetto con costo oltre 600 e la missione parte senza invalidare il progetto; inventario blocchi, missioni e Teeny Ship restano invariati.
+
+Note:
+- `KH2JokCombat_GummiCost.lua` possiede soltanto `Save+0x10F0A` e porta i livelli noti `0..5` al target `6`.
+- Il modulo verifica identità Sora e stato caricato senza dipendere da `Slot1`, rilegge prima/dopo la write e preserva fail-closed valori `>6`.
+- Un controllo read-only della save Steam corrente ha trovato `Save+0x10F0A == 0`, coerente con il limite 600 osservato.
+- Smoke test Fengari passato: prima applicazione, idempotenza, riparazione di una riscrittura vanilla, nuova save, guardia Roxas, valore estraneo e write fallita/F1.
+
 ### Attività: Sbloccare le Keyblade standard di Sora
 
 Status: ongoing

@@ -2,6 +2,17 @@
 
 ## Rischi aperti
 
+### Rischio: Valori Gummi oltre il massimo sicuro
+
+Condizione:
+Il limite costo viene forzato oltre il livello documentato `6`/1200 oppure un altro mod lascia un valore superiore in `Save+0x10F0A`.
+
+Impatto:
+Il Gummi editor può accettare un progetto che il motore non riesce a validare correttamente, con fallimento o distruzione immediata della nave all'avvio missione.
+
+Mitigazione:
+Non implementare 9999 né patch live non verificate: convergere soltanto su `6`, preservare ogni valore estraneo `>6` e testare un blueprint tra 601 e 1200 prima di salvare definitivamente.
+
 ### Rischio: Persistenza delle ability Sora
 
 Condizione:
@@ -122,6 +133,7 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 - Tutte le 25 Action Ability vengono anticipate; le sei Auto restano intenzionalmente disabilitate.
 - Tutte le Form, le innate e le ricompense di livello alterano intenzionalmente la progressione; Drive viene portato e riempito a 9/9.
 - Le 23 Keyblade standard diverse da Ultima Weapon e i default Bond of Flame/Oblivion per Master/Final vengono anticipati e persistono nella save; eventuali ricompense vanilla successive possono aggiungere copie.
+- Il Cost Limit Gummi viene anticipato al massimo sicuro 1200 e persiste salvando; il limite nativo di progressione viene intenzionalmente superato, ma non il range supportato.
 - L'MSET Roxas resta nel pacchetto come baseline chiusa anche durante il lavoro Sora.
 
 ## Rischi chiusi
