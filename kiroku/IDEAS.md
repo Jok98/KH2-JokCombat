@@ -4,16 +4,13 @@
 
 - Separare i probe diagnostici dal profilo runtime normale per ridurre log e responsabilità della build.
 - Aggiungere un controllo automatico di manifest, sorgenti, hash live e delta BAR/MSET.
-- Aggiungere un probe read-only di action, motion e moveset attivo al trigger di Quick Run/Aerial Dodge.
-- Verificare le Growth dopo un cambio stanza: la write post-spawn potrebbe aggiornare la save/menu senza ricostruire la cache action/motion del player già caricato.
-- Confrontare livello 1 e MAX delle Growth problematiche prima di cambiare progress flags.
 - Osservare motion ID, weapon state e cancel window di Sora prima di progettare i branch A/Y.
 
 ## Idee differite
 
 - Routing combo A/Y con launcher, gap closer e finisher: riprendere dopo la mappatura completa del moveset Sora.
 - Tuning ATKP Musou: riprendere quando i rami combo e le reaction native sono noti.
-- Growth ability runtime-only: valutare solo se la persistenza nella save diventa indesiderata; il sistema corrente usa gli slot nativi.
+- Un gate diretto sul modello/costume attivo: valutare solo se il progetto dovrà supportare mod che assegnano Valor prima dei vestiti KH2.
 - Transizione inversa `S010` e weapon hide Roxas: archiviata finché Roxas resta chiuso per scope.
 
 ## Idee rifiutate
@@ -41,6 +38,14 @@ Il test mostra già Drive `3/3` e Gauge `100`; Sora base possiede le action Grow
 
 Da ricordare:
 Le fusioni possono essere abilitate in futuro come scelta di progressione, ma non vanno usate come workaround diagnostico senza evidenza di una dipendenza.
+
+### Rifiutata: Importare le motion standard nel MSET del costume KH1
+
+Motivo:
+L'asset sperimentale conservava 993 entry e cambiava soltanto sette slot `DUMM` con gli ANB corrispondenti di `P_EX100`, ma il test gameplay continuava a mostrare T-pose su Square e secondo salto.
+
+Da ricordare:
+La correttezza strutturale del BAR non garantisce compatibilità di motion, skeleton e action table fra `P_EX100` e `P_EX100_KH1F`. L'asset è stato rimosso; durante il costume KH1 usare il profilo growth disabilitato.
 
 ## Idee vietate
 

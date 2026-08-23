@@ -5,7 +5,7 @@
 - Il capitolo Roxas è considerato concluso per lo scope del progetto.
 - Le sezioni Roxas restano come archivio tecnico e baseline funzionante; non sono più la priorità attiva.
 - Il focus corrente è Sora, a partire dall'inizio della sua storia.
-- Primo passo: High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide a livello MAX, equipaggiate tramite gli slot growth nativi.
+- Primo passo: tutte le growth a livello MAX negli slot nativi; con il costume KH1 resta equipaggiato solo High Jump, mentre Quick Run, Dodge Roll, Aerial Dodge e Glide restano visibili ma disabilitati fino ai vestiti KH2.
 - Nucleo combo iniziale: Combo Master, due Combo Plus ground e due Air Combo Plus presenti ed equipaggiati nella tabella abilità standard di Sora.
 - Le modifiche future devono usare il flag storia Sora e non riaprire il workstream Roxas salvo regressioni esplicite.
 

@@ -17,20 +17,21 @@ Conseguenze:
 - I problemi Roxas noti restano archiviati e non sono TODO attivi.
 - Roxas viene riaperto solo per una regressione richiesta esplicitamente.
 
-### Decisione: Tutte le growth ability Sora a MAX
+### Decisione: Profilo movement dipendente dal costume Sora
 
 Status: active
 Area: movement
 
 Decisione:
-Equipaggiare High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide al livello MAX quando il gameplay Sora è pronto.
+Mantenere tutte le growth a livello MAX. Finché Valor non è stato ottenuto con i vestiti KH2, equipaggiare soltanto High Jump e lasciare Quick Run, Dodge Roll, Aerial Dodge e Glide presenti nella lista ma disabilitate; dopo Valor equipaggiarle tutte.
 
 Rationale:
-È il primo incremento richiesto per rendere immediatamente completo il vocabolario di movimento di Sora.
+Il costume KH1 va in T-pose su Square e secondo salto con quelle growth attive, e anche l'import controllato delle motion standard nel suo MSET non risolve il problema. High Jump è invece sicuro.
 
 Conseguenze:
-- Le write usano gli slot growth nativi e possono diventare persistenti salvando.
-- La progressione vanilla delle growth ability viene intenzionalmente superata.
+- Le write usano gli slot growth nativi, conservano i livelli MAX e modificano solo il bit equipaggiato secondo il profilo.
+- `Save+0x36C0 & 0x02` è il proxy vanilla dell'ottenimento dei vestiti KH2.
+- Il giocatore può vedere le quattro growth disabilitate nel menu ma non deve equipaggiarle manualmente durante il costume KH1.
 - Nessuna write viene eseguita durante Roxas.
 
 ### Decisione: Combat native-first
@@ -81,4 +82,5 @@ Conseguenze:
 
 ## Decisioni sostituite o obsolete
 
+- L'attivazione immediata di tutte e cinque le growth MAX è sostituita dal profilo costume-aware dopo la T-pose confermata nel costume KH1.
 - Il post-landing Roxas non è più la priorità corrente; resta documentato solo come archivio tecnico.

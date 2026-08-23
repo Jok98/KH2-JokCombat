@@ -5,13 +5,35 @@
 ### Rischio: Persistenza delle ability Sora
 
 Condizione:
-La partita viene salvata dopo l'applicazione di growth MAX e nucleo combo.
+La partita viene salvata dopo l'applicazione del profilo growth o del nucleo combo.
 
 Impatto:
-La progressione vanilla di movement e support ability viene modificata permanentemente in quella save.
+Livelli MAX e stato equipaggiato/disabilitato diventano permanenti in quella save.
 
 Mitigazione:
 Usare una save di prova o backup e salvare solo se il risultato è desiderato.
+
+### Rischio: Riattivazione manuale nel costume KH1
+
+Condizione:
+Il giocatore equipaggia dal menu Quick Run, Dodge Roll, Aerial Dodge o Glide prima dei vestiti KH2.
+
+Impatto:
+Square o il secondo salto possono tornare a produrre T-pose.
+
+Mitigazione:
+Il runtime le lascia visibili a MAX ma disabilitate; non equipaggiarle manualmente finché Sora usa il costume KH1.
+
+### Rischio: Valor ottenuto prima dei vestiti da un'altra mod
+
+Condizione:
+Una randomizer o un'altra mod imposta `Save+0x36C0 & 0x02` durante il costume KH1.
+
+Impatto:
+Il proxy seleziona il profilo KH2 ed equipaggia prematuramente le quattro growth incompatibili.
+
+Mitigazione:
+Lo scope corrente è la progressione vanilla, dove Valor viene assegnato insieme ai vestiti KH2. Per integrazioni non vanilla servirà una guardia sul modello attivo o un segnale equivalente verificato.
 
 ### Rischio: Conflitto con altri mod della tabella ability
 
@@ -47,18 +69,7 @@ Mitigazione:
 Lavorare nella clone OpenKH canonica, lasciare che Mods Manager componga la cartella live e confrontare SHA-256 prima della prova gameplay.
 
 Stato corrente:
-Il rischio si è materializzato nel test precedente, ma i sorgenti Sora sono ora nella clone OpenKH canonica. La cartella live resta da rigenerare con Build e verificare prima del prossimo test.
-
-### Rischio: Diagnosticare la T-pose alterando la progressione
-
-Condizione:
-Si sbloccano tutte le Drive Form o si forza la barra Drive prima di identificare la motion fallita.
-
-Impatto:
-La save cambia in modo ampio senza risolvere necessariamente la causa e rende meno leggibile il test.
-
-Mitigazione:
-Prima usare un probe read-only su action/motion e un test controllato Growth livello 1; modificare Drive/Form solo se emerge una dipendenza concreta.
+I sorgenti sono nella clone OpenKH canonica. La cartella live deve essere rigenerata per eliminare il vecchio override KH1 prima del prossimo test.
 
 ### Rischio: Mancanza di test Lua automatico
 
@@ -71,23 +82,14 @@ Errori sintattici o differenze runtime emergono solo al caricamento F1.
 Mitigazione:
 Eseguire controlli statici, mantenere codice semplice e verificare la console LuaBackend prima di salvare.
 
-### Rischio: Compatibilità motion sul costume KH1
-
-Condizione:
-Le ANB Growth di `P_EX100` vengono eseguite dal modello `P_EX100_KH1F`.
-
-Impatto:
-Una differenza di skeleton o trigger potrebbe produrre animazioni errate anche dopo aver riempito gli slot.
-
-Mitigazione:
-Gli import occupano gli stessi indici riservati e `A180` è già condiviso byte-per-byte fra i due MSET; il BAR delta è limitato a sette entry. Validare in gameplay dopo Build e riavvio prima di considerare chiuso il rischio.
-
 ## Rischi accettati
 
-- Le cinque growth ability MAX alterano intenzionalmente la progressione Sora perché questa è la funzione richiesta.
+- Le cinque growth ability a livello MAX alterano intenzionalmente la progressione Sora; nel costume KH1 solo High Jump è equipaggiato.
 - Il nucleo combo `1 + 2 + 2` altera intenzionalmente la progressione delle support ability Sora.
 - L'MSET Roxas resta nel pacchetto come baseline chiusa anche durante il lavoro Sora.
 
 ## Rischi chiusi
 
 - La possibile copia Combo Master già inserita dal vecchio runtime viene rilevata, riusata ed equipaggiata senza duplicarla.
+- L'ipotesi che l'import delle motion standard rendesse sicure le growth nel costume KH1 è stata falsificata dal gameplay; asset e manifest entry sono stati rimossi.
+- Lo sblocco di tutte le Drive Form come workaround della T-pose è escluso: Drive e Gauge erano già presenti e il problema seguiva le growth equipaggiate.

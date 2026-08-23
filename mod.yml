@@ -4,11 +4,6 @@ description: "Native-first combat overhaul prototype for Kingdom Hearts II Final
 game: kh2
 
 assets:
-- name: obj/P_EX100_KH1F.mset
-  method: copy
-  source:
-  - name: assets/obj/P_EX100_KH1F_JokCombat.mset
-
 - name: obj/P_EX110_BTLF.mset
   method: copy
   source:
