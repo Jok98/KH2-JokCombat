@@ -1,5 +1,14 @@
 # KH2-JokCombat — TODO tecnico
 
+## Direzione corrente — Sora
+
+- Il capitolo Roxas è considerato concluso per lo scope del progetto.
+- Le sezioni Roxas restano come archivio tecnico e baseline funzionante; non sono più la priorità attiva.
+- Il focus corrente è Sora, a partire dall'inizio della sua storia.
+- Primo passo: High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide a livello MAX, equipaggiate tramite gli slot growth nativi.
+- Nucleo combo iniziale: Combo Master, due Combo Plus ground e due Air Combo Plus presenti ed equipaggiati nella tabella abilità standard di Sora.
+- Le modifiche future devono usare il flag storia Sora e non riaprire il workstream Roxas salvo regressioni esplicite.
+
 ## Obiettivo generale
 
 Trasformare il combat di Kingdom Hearts II Final Mix in un sistema più orientato a combo/stile Musou, sul modello di KH1-JokCombat, con particolare focus su:
@@ -78,7 +87,7 @@ Risultato:
 
 ---
 
-# TODO ATTIVO
+# ARCHIVIO ROXAS — CHIUSO PER SCOPE
 
 ## A. Correggere il comportamento post-aerial / post-landing
 
@@ -377,12 +386,10 @@ Il sistema finale dovrà essere basato su moveset completi e fallback controllat
 
 ---
 
-# Priorità attuale
+# Priorità corrente — Sora
 
-1. **Post-landing weapon state / idle selection**
-2. Stabilizzare movimento e transizioni Roxas Dual-Wield.
-3. Mappatura completa del moveset.
-4. Combo architecture A/Y.
-5. ATKP / cancel / Musou tuning.
-6. Sora.
-7. **Riprendere S010_REVERSE e animazione di sparizione Dual-Wield quando la gestione dello stato weapon sarà compresa.**
+1. Validare in gameplay le cinque growth ability MAX e il nucleo combo Sora completo.
+2. Mappare movement, attacchi, finisher e cancel nativi di Sora.
+3. Definire la combo architecture A/Y.
+4. Regolare ATKP, cancel e feeling Musou mantenendo il motore nativo.
+5. Conservare Roxas come baseline chiusa; riaprirlo solo per regressioni esplicite.

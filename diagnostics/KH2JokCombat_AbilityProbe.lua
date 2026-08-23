@@ -1,6 +1,6 @@
 LUAGUI_NAME = "KH2 JokCombat - Ability Probe"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Read-only probe for Roxas movement and combo-core abilities"
+LUAGUI_DESC = "Read-only probe for Sora movement and combo-core abilities"
 
 local kh2lib = nil
 local CanExecute = false
@@ -12,6 +12,9 @@ local STANDARD_ABILITY_SLOT_COUNT = 69
 
 local ABILITY_ID_MASK = 0x0FFF
 local EQUIPPED_FLAG = 0x8000
+
+local SORA_STORY_FLAG_OFFSET = 0x1CEA
+local SORA_STORY_FLAG_MASK = 0x01
 
 local MOVEMENT = {
     {
@@ -75,8 +78,11 @@ local function IsGameplayReady()
     local world = ReadByte(kh2lib.Now + 0x00)
     local room = ReadByte(kh2lib.Now + 0x01)
     local maxHp = ReadInt(kh2lib.Slot1 + 0x004)
+    local storyFlags = ReadByte(kh2lib.Save + SORA_STORY_FLAG_OFFSET)
+    local isSora = (storyFlags & SORA_STORY_FLAG_MASK) ~= 0
 
-    return world ~= 0xFF
+    return isSora
+        and world ~= 0xFF
         and room ~= 0xFF
         and maxHp > 0
 end
@@ -224,7 +230,7 @@ function _OnInit()
     ErrorReported = false
 
     ConsolePrint(
-        "Ability Probe read-only inizializzata; attendo gameplay...",
+        "Ability Probe read-only inizializzata; attendo gameplay Sora...",
         1
     )
 end
