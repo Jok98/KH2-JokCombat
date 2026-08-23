@@ -10,7 +10,7 @@
 
 - Routing combo A/Y con launcher, gap closer e finisher: riprendere dopo la mappatura completa del moveset Sora.
 - Tuning ATKP Musou: riprendere quando i rami combo e le reaction native sono noti.
-- Un gate diretto sul modello/costume attivo: valutare solo se il progetto dovrà supportare mod che assegnano Valor prima dei vestiti KH2.
+- Un gate diretto sul modello/costume attivo: valutare se il progetto dovrà tornare a supportare automaticamente le save prima dei vestiti KH2 senza disabilitare le growth nelle save successive.
 - Transizione inversa `S010` e weapon hide Roxas: archiviata finché Roxas resta chiuso per scope.
 
 ## Idee rifiutate
@@ -45,7 +45,7 @@ Motivo:
 L'asset sperimentale conservava 993 entry e cambiava soltanto sette slot `DUMM` con gli ANB corrispondenti di `P_EX100`, ma il test gameplay continuava a mostrare T-pose su Square e secondo salto.
 
 Da ricordare:
-La correttezza strutturale del BAR non garantisce compatibilità di motion, skeleton e action table fra `P_EX100` e `P_EX100_KH1F`. L'asset è stato rimosso; durante il costume KH1 usare il profilo growth disabilitato.
+La correttezza strutturale del BAR non garantisce compatibilità di motion, skeleton e action table fra `P_EX100` e `P_EX100_KH1F`. L'asset è stato rimosso; il runtime corrente privilegia tutte le growth ON e dichiara incompatibile la vecchia save KH1 finché non esiste un gate modello verificato.
 
 ## Idee vietate
 

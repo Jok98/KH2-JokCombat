@@ -18,17 +18,17 @@
 
 ## Movimento Sora
 
-| Abilità | Slot save | Stato conservativo |
+| Abilità | Slot save | Stato target |
 | --- | --- | --- |
 | High Jump | `0x25CE` | `0x8061` attiva |
-| Quick Run | `0x25D0` | `0x0065` disabilitata |
-| Dodge Roll | `0x25D2` | `0x0237` disabilitata |
-| Aerial Dodge | `0x25D4` | `0x0069` disabilitata |
-| Glide | `0x25D6` | `0x006D` disabilitata |
+| Quick Run | `0x25D0` | `0x8065` attiva |
+| Dodge Roll | `0x25D2` | `0x8237` attiva |
+| Aerial Dodge | `0x25D4` | `0x8069` attiva |
+| Glide | `0x25D6` | `0x806D` attiva |
 
 Il bit `0x8000` indica equipaggiata; `0x0FFF` estrae l'ID. Il modulo ispeziona tutti e cinque gli slot prima della prima write, accetta solo vuoto o un livello della famiglia attesa, quindi scrive e rilegge ogni valore.
 
-Il possesso di Valor non identifica più il costume perché `KH2JokCombat_Forms.lua` lo assegna subito. Movement applica quindi sempre il profilo KH1 già verificato: solo High Jump equipaggiato. Un futuro profilo KH2 richiede un segnale diretto del modello/outfit, non un evento di progressione.
+Movement non prova a inferire il costume dal possesso di Valor o da un offset storia non verificato: applica sempre i cinque target MAX equipaggiati. Questo elimina la write che lasciava quattro growth OFF dopo ogni F1/load. Se in futuro servirà supportare automaticamente anche il costume KH1, il gate dovrà leggere un segnale diretto e verificato del modello/outfit; fino ad allora il rischio KH1 resta dichiarato invece di disabilitare silenziosamente le ability.
 
 Il pacchetto non sostituisce più `P_EX100_KH1F.mset`: l'import di sette motion da `P_EX100.mset`, pur corretto a livello BAR, ha mantenuto la T-pose nel test gameplay ed è stato rimosso.
 
@@ -54,6 +54,14 @@ Le ricompense FMLV inserite nella tabella standard sono Auto Valor/Wisdom/Limit/
 Gli AP disponibili nel personaggio live risiedono nel byte `Slot1+0x18E`; `Save+0x24F8` è invece soltanto il numero persistente di AP Boost applicati. `KH2JokCombat_Forms.lua` scrive e verifica `0xFF`/255 quando Sora è pronto in forma base e lo ripristina dopo ogni ricostruzione di `Slot1`. Il target è il massimo assoluto rappresentabile dal campo; il contatore AP Boost della save non viene modificato.
 
 L'Ability Probe registra sia AP live sia AP Boost applicati, restando read-only. Gli AP non vengono resi persistenti nella save: dipendono intenzionalmente dal modulo attivo, mentre Form, ability e Drive continuano a seguire la loro ownership persistente esistente.
+
+## Inventario Keyblade Sora
+
+OpenKH descrive `InventoryCount` come 320 byte da `Save+0x3580`. `KH2JokCombat_Keyblades.lua` possiede soltanto i 23 conteggi delle Keyblade standard di Sora diverse da Ultima Weapon: Kingdom Key, Oathkeeper, Oblivion, le 18 armi standard da Star Seeker a Fenrir, Two Become One e Winner's Proof.
+
+Prima di scrivere, il modulo legge anche il weapon slot base `Save+0x24F0` e i cinque slot secondari Form `Save+0x32F4`, `0x332C`, `0x3364`, `0x339C`, `0x33D4`. Una Keyblade con stock maggiore di zero o presente in uno di questi slot è già posseduta; solo un target con stock zero e non equipaggiato riceve conteggio `1`. Questo evita duplicazioni dopo F1 o reload.
+
+Ultima Weapon (`ID 0x01F4`, `Save+0x368F`) viene letta soltanto per verificarne la preservazione. Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D non appartengono al pool standard richiesto. Nessun weapon slot viene scritto.
 
 ## Combat Core Sora
 

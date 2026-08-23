@@ -17,23 +17,22 @@ Conseguenze:
 - I problemi Roxas noti restano archiviati e non sono TODO attivi.
 - Roxas viene riaperto solo per una regressione richiesta esplicitamente.
 
-### Decisione: Profilo movement KH1 conservativo indipendente dalle Form
+### Decisione: Tutte le growth MAX restano equipaggiate
 
 Status: active
 Area: movement
 
 Decisione:
-Mantenere tutte le growth base a livello MAX, equipaggiare soltanto High Jump e lasciare Quick Run, Dodge Roll, Aerial Dodge e Glide presenti nella lista ma disabilitate. Non usare il possesso di Valor come segnale del costume.
+Mantenere High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide a livello MAX con il bit equipaggiato attivo a ogni F1/load. Non usare il possesso di Valor né un flag storia non verificato come segnale del costume.
 
 Rationale:
-Il costume KH1 va in T-pose su Square e secondo salto con quelle growth attive, e anche l'import controllato delle motion standard nel suo MSET non risolve il problema. High Jump è invece sicuro.
+Il profilo KH1 non possedeva alcuna transizione al costume KH2 e quindi disabilitava per sempre quattro growth, anche dopo l'evento dei vestiti. La correzione richiesta è che lo script non trasformi più una misura temporanea in stato permanente.
 
 Conseguenze:
-- Le write usano gli slot growth nativi, conservano i livelli MAX e modificano soltanto il bit equipaggiato.
-- Sbloccare Valor in anticipo non riattiva automaticamente le quattro growth incompatibili.
-- Il giocatore può vedere le quattro growth disabilitate nel menu ma non deve equipaggiarle manualmente durante il costume KH1.
-- L'attivazione automatica nel costume KH2 resta sospesa finché non viene verificato un segnale diretto del modello/outfit.
+- Le write convergono su `0x8061`, `0x8065`, `0x8237`, `0x8069`, `0x806D` e non rimuovono più il bit `0x8000`.
 - Nessuna write viene eseguita durante Roxas.
+- Una vecchia save con costume KH1 può ancora andare in T-pose con le quattro growth avanzate; non esiste al momento un gate automatico affidabile.
+- Un futuro supporto KH1 condizionale richiede un segnale diretto del modello/outfit e una regressione dedicata.
 
 ### Decisione: Tutte le Drive Form e le loro ability subito
 
@@ -103,6 +102,23 @@ Conseguenze:
 - Il test con costume KH1 deve coprire ogni Action perché alcune motion avanzate potrebbero non essere disponibili nel relativo MSET.
 - La progressione vanilla di Action e support combo viene intenzionalmente superata.
 
+### Decisione: Tutte le Keyblade standard tranne Ultima Weapon
+
+Status: active
+Area: progression
+
+Decisione:
+Garantire subito le 23 Keyblade standard di Sora diverse da Ultima Weapon, senza includere armi debug, Struggle o dummy Form e senza modificare gli slot arma esistenti.
+
+Rationale:
+Il giocatore deve poter sperimentare liberamente armi e relative ability durante il nuovo workstream Sora, mantenendo Ultima Weapon come eccezione esplicita. Contare anche le armi già equipaggiate evita copie artificiali dopo F1 o reload.
+
+Conseguenze:
+- Solo i target con stock zero e non presenti nei weapon slot Sora/Form ricevono conteggio `1`.
+- Ultima Weapon viene osservata e preservata, non concessa né rimossa se già posseduta.
+- Winner's Proof e Two Become One fanno parte del pool standard; Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D restano escluse.
+- La progressione vanilla delle 23 Keyblade viene intenzionalmente anticipata e diventa persistente salvando la partita.
+
 ### Decisione: Clone OpenKH come working copy canonica
 
 Status: active
@@ -120,6 +136,6 @@ Conseguenze:
 
 ## Decisioni sostituite o obsolete
 
-- L'attivazione immediata di tutte e cinque le growth base MAX è sostituita dal profilo KH1 conservativo dopo la T-pose confermata.
+- Il profilo KH1 conservativo permanente è sostituito dall'attivazione delle cinque growth MAX: non aveva alcun segnale di transizione e disabilitava quattro ability dopo ogni F1/load anche nel costume KH2.
 - Il possesso di Valor come proxy dei vestiti KH2 è obsoleto perché Valor viene ora sbloccato intenzionalmente prima dell'evento vanilla.
 - Il post-landing Roxas non è più la priorità corrente; resta documentato solo come archivio tecnico.

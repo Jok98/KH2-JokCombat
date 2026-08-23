@@ -8,21 +8,21 @@ Condizione:
 La partita viene salvata dopo l'applicazione del profilo growth o del nucleo combo.
 
 Impatto:
-Livelli MAX e stato equipaggiato/disabilitato diventano permanenti in quella save.
+Livelli MAX e stato equipaggiato diventano permanenti in quella save.
 
 Mitigazione:
 Usare una save di prova o backup e salvare solo se il risultato è desiderato.
 
-### Rischio: Riattivazione manuale nel costume KH1
+### Rischio: Growth attive nel costume KH1
 
 Condizione:
-Il giocatore equipaggia dal menu Quick Run, Dodge Roll, Aerial Dodge o Glide prima dei vestiti KH2.
+Il modulo viene applicato su una save in cui Sora indossa ancora il costume KH1.
 
 Impatto:
 Square o il secondo salto possono tornare a produrre T-pose.
 
 Mitigazione:
-Il runtime le lascia visibili a MAX ma disabilitate; non equipaggiarle manualmente finché Sora usa il costume KH1.
+Non usare né salvare il profilo all-growth su una vecchia save KH1. Se quel tratto dovrà essere supportato di nuovo, introdurre prima un segnale diretto del modello attivo e testare entrambi i rami; non usare Valor o un flag storia ipotetico.
 
 ### Rischio: Action avanzate nel MSET del costume KH1
 
@@ -34,6 +34,17 @@ L'attacco può produrre T-pose, blocco temporaneo o una transizione errata, come
 
 Mitigazione:
 Provare le 19 Action operative una per volta dopo Build/F1, senza salvare finché il set non è validato. Non importare motion in massa: isolare prima l'Action e lo slot nativo responsabile.
+
+### Rischio: Persistenza e ricompense Keyblade successive
+
+Condizione:
+La partita viene salvata dopo lo sblocco oppure una ricompensa vanilla concede più tardi una Keyblade già anticipata.
+
+Impatto:
+Le 23 armi restano possedute nella save e una ricompensa successiva può aumentare il relativo stock oltre una copia.
+
+Mitigazione:
+Usare una save di prova o backup. Il runtime non aumenta conteggi già positivi e considera possedute le armi equipaggiate, quindi non crea duplicati autonomamente dopo F1 o reload.
 
 ### Rischio: Form anticipate durante il costume KH1
 
@@ -106,10 +117,11 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 
 ## Rischi accettati
 
-- Le cinque growth ability a livello MAX alterano intenzionalmente la progressione Sora; nel costume KH1 solo High Jump è equipaggiato.
+- Le cinque growth ability a livello MAX e ON alterano intenzionalmente la progressione Sora; sulle vecchie save con costume KH1 le quattro growth avanzate possono produrre T-pose.
 - Il nucleo combo `1 + 2 + 2` altera intenzionalmente la progressione delle support ability Sora.
 - Tutte le 25 Action Ability vengono anticipate; le sei Auto restano intenzionalmente disabilitate.
 - Tutte le Form, le innate e le ricompense di livello alterano intenzionalmente la progressione; Drive viene portato e riempito a 9/9.
+- Le 23 Keyblade standard diverse da Ultima Weapon vengono anticipate e persistono nella save; eventuali ricompense vanilla successive possono aggiungere copie.
 - L'MSET Roxas resta nel pacchetto come baseline chiusa anche durante il lavoro Sora.
 
 ## Rischi chiusi
@@ -118,4 +130,4 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 - La possibile copia Combo Master già inserita dal vecchio runtime viene rilevata, riusata ed equipaggiata senza duplicarla.
 - L'ipotesi che l'import delle motion standard rendesse sicure le growth nel costume KH1 è stata falsificata dal gameplay; asset e manifest entry sono stati rimossi.
 - Lo sblocco delle Drive Form non è una correzione della T-pose: resta una funzione di progressione separata, mentre il problema segue le growth base equipaggiate.
-- Il rischio che Valor anticipato riattivi le growth base incompatibili è chiuso: Movement non legge più il bit Valor.
+- L'uso di Valor anticipato come proxy del costume è chiuso: Movement non legge quel bit e non applica un profilo outfit condizionale non verificato.

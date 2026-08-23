@@ -5,8 +5,9 @@
 - Il capitolo Roxas è considerato concluso per lo scope del progetto.
 - Le sezioni Roxas restano come archivio tecnico e baseline funzionante; non sono più la priorità attiva.
 - Il focus corrente è Sora, a partire dall'inizio della sua storia.
-- Tutte le growth sono a livello MAX negli slot nativi; finché non esiste un segnale diretto del costume KH2 resta equipaggiato solo High Jump, mentre Quick Run, Dodge Roll, Aerial Dodge e Glide restano visibili ma disabilitati.
+- Tutte le growth sono a livello MAX ed equipaggiate negli slot nativi; Movement ripristina High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide su ON a ogni F1/load. Non esiste un gate automatico del costume: sulle vecchie save con outfit KH1 le quattro growth avanzate restano incompatibili e possono produrre T-pose.
 - Combat Core: tutte le 25 Action Ability sono presenti; le 19 azioni operative sono equipaggiate, Auto Valor/Wisdom/Limit/Master/Final/Summon restano OFF e il nucleo Combo Master + Combo Plus `2 + 2` resta attivo.
+- Le 23 Keyblade standard di Sora sono disponibili subito; Ultima Weapon, armi debug, Struggle e dummy Form restano escluse e gli slot arma esistenti non vengono modificati.
 - Le modifiche future devono usare il flag storia Sora e non riaprire il workstream Roxas salvo regressioni esplicite.
 
 ## Obiettivo generale

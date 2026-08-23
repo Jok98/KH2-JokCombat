@@ -62,15 +62,25 @@ Per massimizzare gli AP di Sora usare soltanto il campo live `Slot1+0x18E`, con 
 Perché:
 `Save+0x24F8` conta gli AP Boost applicati e non rappresenta gli AP totali. Portarlo arbitrariamente al limite del byte falsificherebbe la progressione e potrebbe sommarsi ai parametri base.
 
-### Vincolo: Movement sicuro nel costume KH1
+### Vincolo: Inventario Keyblade senza duplicazioni
 
 Status: active
 
 Regola:
-Finché non esiste un segnale diretto del costume KH2, lasciare Quick Run, Dodge Roll, Aerial Dodge e Glide nella lista a MAX ma senza bit equipaggiato; soltanto High Jump può restare attivo.
+Concedere solo le 23 Keyblade standard richieste che hanno stock zero e non risultano già equipaggiate su Sora o sulle cinque Form. Non scrivere Ultima Weapon, armi debug/dummy o weapon slot.
 
 Perché:
-Il gameplay ha confermato T-pose su Square e secondo salto nel modello KH1 anche dopo un import MSET staticamente corretto.
+In KH2 un'arma equipaggiata può avere conteggio inventario zero; impostarlo comunque a uno creerebbe una copia aggiuntiva a ogni F1 o reload e altererebbe i loadout delle Form.
+
+### Vincolo: Movement non disabilita le growth
+
+Status: active
+
+Regola:
+Movement deve convergere sui cinque valori MAX equipaggiati e non deve rimuovere il bit `0x8000` da High Jump, Quick Run, Dodge Roll, Aerial Dodge o Glide. Un profilo KH1 automatico può essere reintrodotto soltanto con un segnale diretto e verificato del modello attivo.
+
+Perché:
+Il precedente fallback “finché non troviamo il costume” era in realtà permanente e disabilitava quattro ability a ogni applicazione dello script. Il rischio T-pose del modello KH1 resta reale ma deve essere gestito esplicitamente, non imponendo OFF anche al costume KH2.
 
 ### Vincolo: Auto Action presenti ma disabilitate
 

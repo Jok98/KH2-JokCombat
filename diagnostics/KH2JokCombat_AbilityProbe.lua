@@ -1,6 +1,6 @@
 LUAGUI_NAME = "KH2 JokCombat - Ability Probe"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Read-only probe for Sora movement, Drive Forms and standard abilities"
+LUAGUI_DESC = "Read-only probe for Sora progression, Keyblades and abilities"
 
 local kh2lib = nil
 local CanExecute = false
@@ -36,6 +36,47 @@ local DRIVE_FORMS = {
     { name = "Limit", blockOffset = 0x3364 },
     { name = "Master", blockOffset = 0x339C },
     { name = "Final", blockOffset = 0x33D4 }
+}
+
+local KEYBLADES = {
+    { name = "Kingdom Key", id = 0x0029, inventoryOffset = 0x35A1 },
+    { name = "Oathkeeper", id = 0x002A, inventoryOffset = 0x35A2 },
+    { name = "Oblivion", id = 0x002B, inventoryOffset = 0x35A3 },
+    { name = "Star Seeker", id = 0x01E0, inventoryOffset = 0x367B },
+    { name = "Hidden Dragon", id = 0x01E1, inventoryOffset = 0x367C },
+    { name = "Hero's Crest", id = 0x01E4, inventoryOffset = 0x367F },
+    { name = "Monochrome", id = 0x01E5, inventoryOffset = 0x3680 },
+    { name = "Follow the Wind", id = 0x01E6, inventoryOffset = 0x3681 },
+    { name = "Circle of Life", id = 0x01E7, inventoryOffset = 0x3682 },
+    { name = "Photon Debugger", id = 0x01E8, inventoryOffset = 0x3683 },
+    { name = "Gull Wing", id = 0x01E9, inventoryOffset = 0x3684 },
+    { name = "Rumbling Rose", id = 0x01EA, inventoryOffset = 0x3685 },
+    { name = "Guardian Soul", id = 0x01EB, inventoryOffset = 0x3686 },
+    { name = "Wishing Lamp", id = 0x01EC, inventoryOffset = 0x3687 },
+    { name = "Decisive Pumpkin", id = 0x01ED, inventoryOffset = 0x3688 },
+    { name = "Sleeping Lion", id = 0x01EE, inventoryOffset = 0x3689 },
+    { name = "Sweet Memories", id = 0x01EF, inventoryOffset = 0x368A },
+    { name = "Mysterious Abyss", id = 0x01F0, inventoryOffset = 0x368B },
+    { name = "Fatal Crest", id = 0x01F1, inventoryOffset = 0x368C },
+    { name = "Bond of Flame", id = 0x01F2, inventoryOffset = 0x368D },
+    { name = "Fenrir", id = 0x01F3, inventoryOffset = 0x368E },
+    { name = "Two Become One", id = 0x021F, inventoryOffset = 0x3698 },
+    { name = "Winner's Proof", id = 0x0220, inventoryOffset = 0x3699 }
+}
+
+local ULTIMA_WEAPON = {
+    name = "Ultima Weapon",
+    id = 0x01F4,
+    inventoryOffset = 0x368F
+}
+
+local KEYBLADE_WEAPON_SLOTS = {
+    { name = "Sora", offset = 0x24F0 },
+    { name = "Valor", offset = 0x32F4 },
+    { name = "Wisdom", offset = 0x332C },
+    { name = "Limit", offset = 0x3364 },
+    { name = "Master", offset = 0x339C },
+    { name = "Final", offset = 0x33D4 }
 }
 
 local MOVEMENT = {
@@ -259,6 +300,56 @@ local function LogSoraAp()
     ), 0)
 end
 
+local function GetEquippedKeyblades()
+    local equippedById = {}
+
+    for _, slot in ipairs(KEYBLADE_WEAPON_SLOTS) do
+        local value = ReadShort(kh2lib.Save + slot.offset)
+
+        equippedById[value] = equippedById[value] or {}
+        equippedById[value][#equippedById[value] + 1] = slot.name
+    end
+
+    return equippedById
+end
+
+local function LogKeyblades()
+    local equippedById = GetEquippedKeyblades()
+
+    ConsolePrint("=== SORA KEYBLADES ===", 0)
+
+    for _, keyblade in ipairs(KEYBLADES) do
+        local count = ReadByte(
+            kh2lib.Save + keyblade.inventoryOffset
+        )
+        local equipped = equippedById[keyblade.id] or {}
+        local ready = count > 0 or #equipped > 0
+
+        ConsolePrint(string.format(
+            "%-19s %-7s id=%s stock=%d equipped=[%s] Save+%s",
+            keyblade.name,
+            ready and "READY" or "MISSING",
+            Hex(keyblade.id, 4),
+            count,
+            table.concat(equipped, ","),
+            Hex(keyblade.inventoryOffset, 4)
+        ), 0)
+    end
+
+    local ultimaCount = ReadByte(
+        kh2lib.Save + ULTIMA_WEAPON.inventoryOffset
+    )
+    local ultimaEquipped = equippedById[ULTIMA_WEAPON.id] or {}
+
+    ConsolePrint(string.format(
+        "%-19s EXCLUDED id=%s stock=%d equipped=[%s] [preserved]",
+        ULTIMA_WEAPON.name,
+        Hex(ULTIMA_WEAPON.id, 4),
+        ultimaCount,
+        table.concat(ultimaEquipped, ",")
+    ), 0)
+end
+
 local function FindStandardAbility(targetId)
     local matches = {}
 
@@ -339,6 +430,7 @@ local function LogAbilitySnapshot()
 
     LogSoraAp()
     LogDriveForms()
+    LogKeyblades()
     LogGrowthAbilities()
     LogStandardAbilities()
 
