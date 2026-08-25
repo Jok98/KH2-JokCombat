@@ -1,6 +1,6 @@
 LUAGUI_NAME = "KH2 JokCombat - Sora Movement"
 LUAGUI_AUTH = "Jok"
-LUAGUI_DESC = "Keeps KH1-costume Sora growth abilities at a T-pose-safe state"
+LUAGUI_DESC = "Keeps all five Sora growth abilities equipped at MAX"
 
 local kh2lib = nil
 local CanExecute = false
@@ -20,36 +20,31 @@ local GROWTH_ABILITIES = {
         name = "High Jump",
         slotOffset = 0x25CE,
         minId = 0x005E,
-        maxId = 0x0061,
-        kh1Safe = true
+        maxId = 0x0061
     },
     {
         name = "Quick Run",
         slotOffset = 0x25D0,
         minId = 0x0062,
-        maxId = 0x0065,
-        kh1Safe = false
+        maxId = 0x0065
     },
     {
         name = "Dodge Roll",
         slotOffset = 0x25D2,
         minId = 0x0234,
-        maxId = 0x0237,
-        kh1Safe = false
+        maxId = 0x0237
     },
     {
         name = "Aerial Dodge",
         slotOffset = 0x25D4,
         minId = 0x0066,
-        maxId = 0x0069,
-        kh1Safe = false
+        maxId = 0x0069
     },
     {
         name = "Glide",
         slotOffset = 0x25D6,
         minId = 0x006A,
-        maxId = 0x006D,
-        kh1Safe = false
+        maxId = 0x006D
     }
 }
 
@@ -70,18 +65,8 @@ local function IsSoraGameplayReady()
         and maxHp > 0
 end
 
--- Valor is unlocked early by the Forms module, so it can no longer identify
--- Sora's active outfit. Until a direct and verified model signal is available,
--- keep the only gameplay-tested safe profile: High Jump active, every other
--- growth ability visible at MAX but unequipped.
 local function GetDesiredGrowthValue(ability)
-    local desired = ability.maxId
-
-    if ability.kh1Safe then
-        desired = desired | EQUIPPED_FLAG
-    end
-
-    return desired
+    return ability.maxId | EQUIPPED_FLAG
 end
 
 -- Read and validate every slot before writing any of them. This prevents an
@@ -116,7 +101,7 @@ local function InspectGrowthSlots()
     return slots
 end
 
-local function ApplySafeMovementProfile()
+local function ApplyMovementProfile()
     local slots = InspectGrowthSlots()
     local changedCount = 0
 
@@ -136,35 +121,20 @@ local function ApplySafeMovementProfile()
 
             changedCount = changedCount + 1
 
-            if (slot.desired & EQUIPPED_FLAG) ~= 0 then
-                ConsolePrint(string.format(
-                    "%s MAX equipaggiato: Save+%s %s -> %s",
-                    slot.ability.name,
-                    Hex(slot.ability.slotOffset, 4),
-                    Hex(slot.before, 4),
-                    Hex(after, 4)
-                ), 1)
-            else
-                ConsolePrint(string.format(
-                    "%s MAX lasciato in lista ma disabilitato: Save+%s %s -> %s",
-                    slot.ability.name,
-                    Hex(slot.ability.slotOffset, 4),
-                    Hex(slot.before, 4),
-                    Hex(after, 4)
-                ), 1)
-            end
+            ConsolePrint(string.format(
+                "%s MAX equipaggiato: Save+%s %s -> %s",
+                slot.ability.name,
+                Hex(slot.ability.slotOffset, 4),
+                Hex(slot.before, 4),
+                Hex(after, 4)
+            ), 1)
         end
     end
 
     ConsolePrint(string.format(
-        "Profilo movement sicuro pronto: High Jump MAX attivo; altre 4 growth MAX in lista ma disabilitate (%d aggiornate).",
+        "Sora Movement pronto: tutte le 5 growth MAX sono equipaggiate (%d aggiornate).",
         changedCount
     ), 1)
-
-    ConsolePrint(
-        "Valor non viene usato come proxy del costume: le Form possono essere sbloccate subito senza riattivare le growth incompatibili.",
-        2
-    )
 
     ConsolePrint(
         "Nota: livelli e stato equipaggiato sono nella save RAM; salvando la partita diventano persistenti.",
@@ -238,7 +208,7 @@ function _OnFrame()
         return
     end
 
-    local patchOk, patchError = pcall(ApplySafeMovementProfile)
+    local patchOk, patchError = pcall(ApplyMovementProfile)
 
     if not patchOk then
         ConsolePrint(

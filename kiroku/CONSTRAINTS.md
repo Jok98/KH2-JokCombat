@@ -37,7 +37,7 @@ Sovrascrivere dati sconosciuti può corrompere save o confliggere silenziosament
 Status: active
 
 Regola:
-Modificare soltanto bit unlock, Level/AbilityLevel/EXP delle cinque Form livellabili, target innate verificati, ricompense FMLV e barra Drive. Preservare weapon slot, ability extra e campi non documentati; Anti non riceve una progressione inventata e `DriveForms[5]`/Summon resta intatto.
+Nel modulo Forms modificare soltanto bit unlock, Level/AbilityLevel/EXP delle cinque Form livellabili, target innate verificati, ricompense FMLV e barra Drive. Preservare weapon slot, ability extra e campi non documentati; l'unica inizializzazione weapon autorizzata appartiene al modulo Keyblade e riguarda Master/Final esattamente a zero. Anti non riceve una progressione inventata e `DriveForms[5]`/Summon resta intatto.
 
 Perché:
 I record da `0x38` byte contengono stato persistente condiviso con equipaggiamento e altre mod. I dati vanilla PLRP/FMLV forniscono target verificabili senza sovrascrivere il resto.
@@ -62,15 +62,25 @@ Per massimizzare gli AP di Sora usare soltanto il campo live `Slot1+0x18E`, con 
 Perché:
 `Save+0x24F8` conta gli AP Boost applicati e non rappresenta gli AP totali. Portarlo arbitrariamente al limite del byte falsificherebbe la progressione e potrebbe sommarsi ai parametri base.
 
-### Vincolo: Movement sicuro nel costume KH1
+### Vincolo: Keyblade e default Form senza duplicazioni
 
 Status: active
 
 Regola:
-Finché non esiste un segnale diretto del costume KH2, lasciare Quick Run, Dodge Roll, Aerial Dodge e Glide nella lista a MAX ma senza bit equipaggiato; soltanto High Jump può restare attivo.
+Concedere solo le 23 Keyblade standard richieste che hanno stock zero e non risultano già equipaggiate. Inizializzare Master con Bond of Flame e Final con Oblivion soltanto se il rispettivo slot è zero, consumando una copia dallo stock quando presente. Non scrivere Ultima Weapon, armi debug/dummy, slot non vuoti o gli slot Sora/Valor/Wisdom/Limit.
 
 Perché:
-Il gameplay ha confermato T-pose su Square e secondo salto nel modello KH1 anche dopo un import MSET staticamente corretto.
+In KH2 un'arma equipaggiata può avere conteggio inventario zero; impostarlo comunque a uno creerebbe una copia aggiuntiva a ogni F1 o reload. Sovrascrivere uno slot non vuoto annullerebbe invece una scelta del giocatore, mentre lasciare Master/Final a zero dopo l'unlock anticipato mantiene lo stato che causa il crash del menu.
+
+### Vincolo: Movement non disabilita le growth
+
+Status: active
+
+Regola:
+Movement deve convergere sui cinque valori MAX equipaggiati e non deve rimuovere il bit `0x8000` da High Jump, Quick Run, Dodge Roll, Aerial Dodge o Glide. Un profilo KH1 automatico può essere reintrodotto soltanto con un segnale diretto e verificato del modello attivo.
+
+Perché:
+Il precedente fallback “finché non troviamo il costume” era in realtà permanente e disabilitava quattro ability a ogni applicazione dello script. Il rischio T-pose del modello KH1 resta reale ma deve essere gestito esplicitamente, non imponendo OFF anche al costume KH2.
 
 ### Vincolo: Auto Action presenti ma disabilitate
 

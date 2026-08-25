@@ -5,8 +5,10 @@
 - Il capitolo Roxas è considerato concluso per lo scope del progetto.
 - Le sezioni Roxas restano come archivio tecnico e baseline funzionante; non sono più la priorità attiva.
 - Il focus corrente è Sora, a partire dall'inizio della sua storia.
-- Tutte le growth sono a livello MAX negli slot nativi; finché non esiste un segnale diretto del costume KH2 resta equipaggiato solo High Jump, mentre Quick Run, Dodge Roll, Aerial Dodge e Glide restano visibili ma disabilitati.
+- Tutte le growth sono a livello MAX ed equipaggiate negli slot nativi; Movement ripristina High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide su ON a ogni F1/load. Non esiste un gate automatico del costume: sulle vecchie save con outfit KH1 le quattro growth avanzate restano incompatibili e possono produrre T-pose.
 - Combat Core: tutte le 25 Action Ability sono presenti; le 19 azioni operative sono equipaggiate, Auto Valor/Wisdom/Limit/Master/Final/Summon restano OFF e il nucleo Combo Master + Combo Plus `2 + 2` resta attivo.
+- Le 23 Keyblade standard di Sora sono disponibili subito; Ultima Weapon, armi debug, Struggle e dummy Form restano escluse. Per eliminare lo stato `? ----`, Master riceve Bond of Flame e Final Oblivion solo quando il relativo weapon slot è zero; ogni scelta nonzero resta preservata.
+- Il Gummi Ship Cost Limit viene portato al massimo sicuro 1200 tramite il solo livello persistente `Save+0x10F0A = 6`; inventario blocchi, missioni e Teeny Ship restano invariati e valori fuori range non vengono forzati.
 - Le modifiche future devono usare il flag storia Sora e non riaprire il workstream Roxas salvo regressioni esplicite.
 
 ## Obiettivo generale
@@ -388,8 +390,9 @@ Il sistema finale dovrà essere basato su moveset completi e fallback controllat
 
 # Priorità corrente — Sora
 
-1. Validare in gameplay le cinque growth ability MAX e il nucleo combo Sora completo.
-2. Mappare movement, attacchi, finisher e cancel nativi di Sora.
-3. Definire la combo architecture A/Y.
-4. Regolare ATKP, cancel e feeling Musou mantenendo il motore nativo.
-5. Conservare Roxas come baseline chiusa; riaprirlo solo per regressioni esplicite.
+1. Validare nel Gummi Garage Cost Limit 1200, salvataggio di un progetto oltre 600 e avvio missione.
+2. Validare in gameplay Master con Bond of Flame e Final con Oblivion: apertura menu, cambio arma, trasformazione e ritorno non devono causare crash.
+3. Validare le cinque growth ability MAX e il nucleo combo Sora completo.
+4. Mappare movement, attacchi, finisher e cancel nativi di Sora.
+5. Definire la combo architecture A/Y, poi regolare ATKP, cancel e feeling Musou mantenendo il motore nativo.
+6. Conservare Roxas come baseline chiusa; riaprirlo solo per regressioni esplicite.

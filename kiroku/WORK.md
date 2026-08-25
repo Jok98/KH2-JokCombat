@@ -2,6 +2,32 @@
 
 ## In corso
 
+### Attività: Portare il Cost Limit Gummi al massimo sicuro
+
+Status: ongoing
+
+Completamento:
+Dopo OpenKH Build e F1, il Gummi Garage mostra Cost Limit 1200, permette di salvare un progetto con costo oltre 600 e la missione parte senza invalidare il progetto; inventario blocchi, missioni e Teeny Ship restano invariati.
+
+Note:
+- `KH2JokCombat_GummiCost.lua` possiede soltanto `Save+0x10F0A` e porta i livelli noti `0..5` al target `6`.
+- Il modulo verifica identità Sora e stato caricato senza dipendere da `Slot1`, rilegge prima/dopo la write e preserva fail-closed valori `>6`.
+- Un controllo read-only della save Steam corrente ha trovato `Save+0x10F0A == 0`, coerente con il limite 600 osservato.
+- Smoke test Fengari passato: prima applicazione, idempotenza, riparazione di una riscrittura vanilla, nuova save, guardia Roxas, valore estraneo e write fallita/F1.
+
+### Attività: Sbloccare le Keyblade standard di Sora
+
+Status: ongoing
+
+Completamento:
+Dopo OpenKH Build e F1, il menu mostra tutte le 23 Keyblade standard richieste, Master usa Bond of Flame e Final usa Oblivion quando i rispettivi slot erano vuoti; aprire/cambiare entrambi non causa crash, Ultima non viene aggiunta e nessuna arma viene duplicata o sostituita.
+
+Note:
+- `KH2JokCombat_Keyblades.lua` pianifica insieme inventario e due default: scrive Master/Final solo da zero e preserva ogni slot non vuoto.
+- Bond of Flame/Oblivion vengono trasferite dallo stock allo slot quando la copia esiste; un conflitto senza copia disponibile fallisce prima della prima write.
+- Il pool esclude esplicitamente Ultima Weapon, armi Struggle, Alpha/Omega Weapon, Pureblood e Kingdom Key D.
+- Smoke test Fengari: 23 target, default Master/Final, consumo stock, scelta manuale preservata, conflitto senza duplicazione, idempotenza, riparazione dopo load, guardia Roxas e verifica fallita.
+
 ### Attività: Sbloccare tutte le Action Ability Sora
 
 Status: ongoing
@@ -30,19 +56,19 @@ Note:
 - Barra persistente e live vengono portate a `9/9`, con percentuale live `100`; gli AP live vengono portati al massimo byte 255 senza toccare `Save+0x24F8`.
 - Smoke test Fengari: inizializzazione da record vuoti, extra e Summon preservati, AP idempotenti/ripristinati dopo rebuild di `Slot1` e caso fail-closed senza write parziali.
 
-### Attività: Rendere sicuro il movement nel costume KH1
+### Attività: Ripristinare tutte le growth MAX equipaggiate
 
 Status: ongoing
 
 Completamento:
-Dopo OpenKH Build e riavvio, il costume KH1 usa il MSET vanilla, High Jump MAX è equipaggiato, le altre quattro growth MAX sono visibili ma disabilitate e Square/salto non producono T-pose; il nucleo combo resta attivo.
+Dopo OpenKH Build e F1, High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide risultano MAX e ON; un secondo F1 non ne disabilita nessuna e il movement funziona nel costume KH2 senza T-pose.
 
 Note:
 - Il test dell'MSET ricostruito è fallito in gameplay nonostante il delta BAR staticamente corretto; l'override KH1 è stato rimosso.
-- Il runtime non usa più Valor come proxy del costume perché le Form sono sbloccate subito.
-- Scrive sempre `0x8061`, `0x0065`, `0x0237`, `0x0069`, `0x006D` finché non esiste un segnale diretto e verificato del costume KH2.
-- Action Ability e support combo non dipendono dal profilo movement; le growth base problematiche restano comunque OFF.
-- Smoke test Fengari: cinque write attese anche con tutti i bit Form presenti, poi seconda frame idempotente.
+- La causa della disattivazione era una write esplicita del vecchio fallback: non esisteva alcun ramo che passasse dal profilo KH1 al profilo KH2.
+- Il runtime non usa Valor come proxy del costume perché le Form sono sbloccate subito e non usa offset storia non verificati.
+- Scrive sempre `0x8061`, `0x8065`, `0x8237`, `0x8069`, `0x806D` e verifica ogni valore.
+- Smoke test: cinque write da valori OFF/low level, seconda frame idempotente e regressione F1 che riattiva Quick Run invece di lasciarla disabilitata.
 - Per rimuovere un vecchio override MSET dalla build live serve Build più riavvio completo; per i soli script aggiornati basta Build e F1.
 
 ## TODO
@@ -67,7 +93,7 @@ I rami A/Y hanno input, transizioni, comportamento ground/air e condizioni di fi
 
 - Repository aggiornata a `222bbf1` prima del nuovo lavoro.
 - MSET Roxas confrontato con il vanilla: cinque sole entry modificate.
-- Modulo Sora Movement esteso a profili KH1/KH2 con guardia identità, validazione preventiva e verifica post-write.
+- Modulo Sora Movement dotato di guardia identità, validazione preventiva e verifica post-write; il target corrente è all-growth MAX/ON.
 - Modulo Combo Master convertito in Sora Combo Core con target `1 + 2 + 2`, deduplica e verifica post-write.
 - Ability Probe limitato a Sora e predisposto a registrare tutte le copie del nucleo combo.
 - Identificato il rebuild OpenKH come causa del disallineamento tra repository ChatGPT, clone installata e script live.

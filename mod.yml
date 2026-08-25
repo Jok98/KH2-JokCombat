@@ -24,6 +24,16 @@ assets:
   source:
   - name: runtime/KH2JokCombat_Forms.lua
 
+- name: scripts/KH2JokCombat_Keyblades.lua
+  method: copy
+  source:
+  - name: runtime/KH2JokCombat_Keyblades.lua
+
+- name: scripts/KH2JokCombat_GummiCost.lua
+  method: copy
+  source:
+  - name: runtime/KH2JokCombat_GummiCost.lua
+
 - name: scripts/KH2JokCombat_Movement.lua
   method: copy
   source:
