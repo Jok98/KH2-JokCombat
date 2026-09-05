@@ -92,6 +92,42 @@ Auto Valor, Auto Wisdom, Auto Limit, Auto Master, Auto Final e Auto Summon devon
 Perché:
 Il pool Action deve essere completo senza attivazioni automatiche di Form, Limit o Summon; entrambi i moduli che condividono queste ability devono convergere sullo stesso stato OFF.
 
+### Vincolo: A usa la catena Base, Quadrato possiede le speciali
+
+Status: active
+
+Regola:
+Slapshot, Dodge Slash, Flash Step, Slide Dash, Vicinity Break, Guard Break, Explosion, Aerial Sweep, Aerial Dive, Aerial Spiral, Aerial Finish e Magnet Burst devono esistere ma restare OFF. Guard, Upper Slash, Horizontal Slash, Finishing Leap, Counterguard, Retaliating Slash e Trinity Limit restano ON.
+
+Perché:
+Con le speciali equipaggiate KH2 sostituisce A300 con A318/A319 quando trova un bersaglio, impedendo un bucket e una grammatica A uniformi. I carrier Type 0 ON separano l'input Quadrato dalle tecniche selezionate automaticamente su A.
+
+### Vincolo: Router Normal limitato ai MotionId PTYA firmati
+
+Status: active
+
+Regola:
+`KH2JokCombat_NormalCombo.lua` puo modificare i `MotionId` dei record Base PTYA 31, 32 e 34 dopo avere verificato BAR, header, lunghezza, gruppo, sei record e valore precedente whitelisted. Record 31 accetta esclusivamente A322/A319. Il record 32 deve mantenere selector/ability Upper Slash `12/0x12`; la firma legacy V5 `11/0x01` con Type zero è accettata soltanto per il recupero immediato a F1. Input, target, dispatcher/action state, flags, score, combo offset, record aereo e indirizzi heap hardcoded restano vietati. Depth zero ripristina fallback A315/A341.
+
+Perché:
+Il proof deve cambiare soltanto quale motion Base viene consumata dalla dispatch fisica di Quadrato. Allargare la write o fidarsi di un indirizzo di processo precedente renderebbe possibili corruzione dati, conflitti fra build e regressioni native difficili da isolare.
+
+V1/V2/V3/V5 sono respinte live. Carrier 0/1, clone Guard32, input sintetico, target fittizi e write su stato dispatcher/cancel/hit-confirm restano vietati. `ActionProbe` è read-only; confronta snapshot pre-edge omogenei, M-03D tipizza i campi e M-03E può soltanto tracciare il bit 25 di `PLAYER+0x120`. Nessun campo è scrivibile finché identità, semantica, timing e rollback non vengono verificati separatamente.
+
+### Vincolo: Logging centralizzato e severità sempre visibili
+
+Status: active
+
+Regola:
+Ogni nuovo log deve passare da `KH2JokCombat_Log.lua` e appartenere a una
+categoria dichiarata. `ERROR` e `WARNING` non possono essere disattivati; i
+probe devono interrompersi in `_OnInit` quando il proprio flag (`PROBE` oppure
+`DISPATCH`) è OFF.
+
+Perché:
+La console deve restare leggibile durante lo sviluppo combat senza nascondere
+errori fail-closed né eseguire diagnostica per-frame non richiesta.
+
 ## Fuori scope
 
 - Rifinitura del post-landing e delle transizioni armi Roxas.

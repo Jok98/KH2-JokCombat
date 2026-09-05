@@ -4,11 +4,11 @@
 
 - Separare i probe diagnostici dal profilo runtime normale per ridurre log e responsabilità della build.
 - Aggiungere un controllo automatico di manifest, sorgenti, hash live e delta BAR/MSET.
-- Osservare motion ID, weapon state e cancel window di Sora prima di progettare i branch A/Y.
+- Osservare motion ID, weapon state e cancel window di Sora prima di estendere i branch A/Quadrato.
 
 ## Idee differite
 
-- Routing combo A/Y con launcher, gap closer e finisher: riprendere dopo la mappatura completa del moveset Sora.
+- Routing combo A/Quadrato con launcher, gap closer e finisher: riprendere dopo la mappatura completa del moveset Sora.
 - Tuning ATKP Musou: riprendere quando i rami combo e le reaction native sono noti.
 - Un gate diretto sul modello/costume attivo: valutare se il progetto dovrà tornare a supportare automaticamente le save prima dei vestiti KH2 senza disabilitare le growth nelle save successive.
 - Transizione inversa `S010` e weapon hide Roxas: archiviata finché Roxas resta chiuso per scope.

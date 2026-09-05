@@ -67,6 +67,9 @@ memory[SAVE + 0x25D2] = 0x0234
 memory[SAVE + 0x25D4] = 0x0066
 memory[SAVE + 0x25D6] = 0x006A
 
+local Logger = require("runtime.KH2JokCombat_Log")
+Logger.SetEnabled("PROGRESSION", true)
+
 dofile("runtime/KH2JokCombat_Movement.lua")
 _OnInit()
 _OnFrame()

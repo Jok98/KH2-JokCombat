@@ -1,0 +1,156 @@
+{
+  "schema": 2,
+  "profile": "sora-base-native-a-square",
+  "input_sha256": "cd7bd060e33d603017fa2d296421bd0e5b5417582ef99e82045c552af2971d38",
+  "output_sha256": "b3029f6d8cce48b6ee40ea9f6cd7460bb7f24f013642931905617259ff8b7c68",
+  "file_size": 15172,
+  "group": 1,
+  "patches": [
+    {
+      "record": 32,
+      "record_offset": 2468,
+      "selector": "Upper Slash / Square ground action",
+      "source_motion": {
+        "id": 161,
+        "name": "A310 Upper Slash"
+      },
+      "target_motion": {
+        "id": 166,
+        "name": "A315 Explosion"
+      },
+      "before": {
+        "selector_id": 12,
+        "selector_type": 0,
+        "sub_raw": 255,
+        "combo_offset_raw": 0,
+        "flags": 0,
+        "motion_id": 161,
+        "next_motion_id": 0,
+        "ability_selector": 18,
+        "score": 5
+      },
+      "after": {
+        "selector_id": 12,
+        "selector_type": 0,
+        "sub_raw": 255,
+        "combo_offset_raw": 0,
+        "flags": 0,
+        "motion_id": 166,
+        "next_motion_id": 0,
+        "ability_selector": 18,
+        "score": 5
+      }
+    },
+    {
+      "record": 34,
+      "record_offset": 2604,
+      "selector": "Horizontal Slash / Square air action",
+      "source_motion": {
+        "id": 193,
+        "name": "A342 Horizontal Slash"
+      },
+      "target_motion": {
+        "id": 192,
+        "name": "A341 Aerial Spiral"
+      },
+      "before": {
+        "selector_id": 38,
+        "selector_type": 0,
+        "sub_raw": 255,
+        "combo_offset_raw": 0,
+        "flags": 1,
+        "motion_id": 193,
+        "next_motion_id": 4,
+        "ability_selector": 99,
+        "score": 5
+      },
+      "after": {
+        "selector_id": 38,
+        "selector_type": 0,
+        "sub_raw": 255,
+        "combo_offset_raw": 0,
+        "flags": 1,
+        "motion_id": 192,
+        "next_motion_id": 4,
+        "ability_selector": 99,
+        "score": 5
+      }
+    }
+  ],
+  "chain": [
+    {
+      "input": "Square neutral",
+      "action": "A322 Guard",
+      "ownership": "native, preserved"
+    },
+    {
+      "input": "A ground",
+      "action": "native Base ground chain",
+      "ownership": "native, preserved"
+    },
+    {
+      "input": "Square after confirmed ground A",
+      "action": "A315 Explosion",
+      "ownership": "record 32 remap"
+    },
+    {
+      "input": "Square in finisher continuation",
+      "action": "A316 Finishing Leap",
+      "ownership": "native, preserved"
+    },
+    {
+      "input": "Square while airborne",
+      "action": "A341 Aerial Spiral",
+      "ownership": "record 34 remap"
+    },
+    {
+      "input": "A after the aerial branch",
+      "action": "native Base aerial chain and finisher",
+      "ownership": "native, preserved"
+    }
+  ],
+  "byte_differences": [
+    {
+      "offset": 2476,
+      "offset_hex": "0x9AC",
+      "before": 161,
+      "after": 166
+    },
+    {
+      "offset": 2612,
+      "offset_hex": "0xA34",
+      "before": 193,
+      "after": 192
+    }
+  ],
+  "preserved_records": [
+    {
+      "record": 31,
+      "label": "Guard",
+      "offset": 2400,
+      "sha256": "1b5d0e1f39dd74cb9cdb79eac411fc35fbc50460eda974919766eeab0a6ee892",
+      "unchanged": true
+    },
+    {
+      "record": 33,
+      "label": "Finishing Leap",
+      "offset": 2536,
+      "sha256": "1179bdc913be69f9ea0cf217c66cd91dfce020c8db30ae16e17fed689c529743",
+      "unchanged": true
+    },
+    {
+      "record": 35,
+      "label": "Counterguard",
+      "offset": 2672,
+      "sha256": "5e3c7bad8947e021014ef48451573223e5ef04fc47de9c592e07be28c76d5d36",
+      "unchanged": true
+    },
+    {
+      "record": 36,
+      "label": "Retaliating Slash",
+      "offset": 2740,
+      "sha256": "69fa3992f01dba7b98425bbe986af7838d16110ba2fa295e4b8b8c9b7ca987cc",
+      "unchanged": true
+    }
+  ]
+}

@@ -2,6 +2,56 @@ LUAGUI_NAME = "KH2 JokCombat - Roxas Probe"
 LUAGUI_AUTH = "Jok"
 LUAGUI_DESC = "Probe read-only per osservare KH2 e identificare le entry MEMT di Roxas (absolute-pointer fix)"
 
+local RawConsolePrint = ConsolePrint
+local LoggerLoaded, Logger = pcall(require, "KH2JokCombat_Log")
+if not LoggerLoaded then
+    LoggerLoaded, Logger = pcall(require, "runtime.KH2JokCombat_Log")
+end
+local LoggerLoadError = LoggerLoaded and nil or Logger
+
+local function ProbeLog(message, category, level)
+    if LoggerLoaded then
+        return Logger.Log("RoxasProbe", category, message, level)
+    end
+
+    if category == "ERROR" or category == "WARNING" then
+        RawConsolePrint(
+            "[RoxasProbe][" .. category .. "] " .. tostring(message),
+            level or (category == "ERROR" and 3 or 2)
+        )
+    end
+end
+
+local function Log(message)
+    return ProbeLog(message, "PROBE", 0)
+end
+
+local function LogMessage(message)
+    return ProbeLog(message, "PROBE", 0)
+end
+
+local function LogSuccess(message)
+    return ProbeLog(message, "PROBE", 1)
+end
+
+local function LogWarning(message)
+    return ProbeLog(message, "WARNING", 2)
+end
+
+local function LogError(message)
+    return ProbeLog(message, "ERROR", 3)
+end
+
+local function ReportLoggerFailure()
+    if not LoggerLoaded then
+        RawConsolePrint(
+            "[RoxasProbe][ERROR] KH2JokCombat_Log non disponibile: "
+            .. tostring(LoggerLoadError),
+            3
+        )
+    end
+end
+
 local CanExecute = false
 local kh2lib = nil
 
@@ -353,13 +403,17 @@ end
 -- Loads kh2lib and checks library and game compatibility.
 -- Sets CanExecute and resets the internal probe state.
 function _OnInit()
+    CanExecute = false
+    ReportLoggerFailure()
+
+    if not LoggerLoaded or not Logger.IsEnabled("PROBE") then
+        return
+    end
+
     local libraryLoaded, libraryOrError = pcall(require, "kh2lib")
 
     if not libraryLoaded then
-        ConsolePrint(
-            "KH2 Lua Library non disponibile: " .. tostring(libraryOrError),
-            3
-        )
+        LogError("KH2 Lua Library non disponibile: " .. tostring(libraryOrError))
         return
     end
 

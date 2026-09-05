@@ -2,6 +2,35 @@ LUAGUI_NAME = "KH2 JokCombat - Ability Probe"
 LUAGUI_AUTH = "Jok"
 LUAGUI_DESC = "Read-only probe for Sora progression, Keyblades and abilities"
 
+local RawConsolePrint = ConsolePrint
+local LoggerLoaded, Logger = pcall(require, "KH2JokCombat_Log")
+if not LoggerLoaded then
+    LoggerLoaded, Logger = pcall(require, "runtime.KH2JokCombat_Log")
+end
+local LoggerLoadError = LoggerLoaded and nil or Logger
+
+local function ConsolePrint(message, level)
+    local category = level ~= nil and level >= 3 and "ERROR" or "PROBE"
+
+    if LoggerLoaded then
+        return Logger.Log("AbilityProbe", category, message, level)
+    end
+
+    if category == "ERROR" then
+        RawConsolePrint("[AbilityProbe][ERROR] " .. tostring(message), level or 3)
+    end
+end
+
+local function ReportLoggerFailure()
+    if not LoggerLoaded then
+        RawConsolePrint(
+            "[AbilityProbe][ERROR] KH2JokCombat_Log non disponibile: "
+            .. tostring(LoggerLoadError),
+            3
+        )
+    end
+end
+
 local kh2lib = nil
 local CanExecute = false
 local SnapshotDone = false
@@ -164,7 +193,7 @@ local STANDARD_ABILITIES = {
     { name = "MP Rage", id = 0x019C, targetCount = 1, equipped = true },
     { name = "MP Haste", id = 0x019D, targetCount = 1, equipped = true },
     { name = "Draw", id = 0x0195, targetCount = 1, equipped = true },
-    { name = "Lucky Lucky", id = 0x0197, targetCount = 1, equipped = true },
+    { name = "Lucky Lucky", id = 0x0197, targetCount = 2, equipped = true },
     { name = "Form Boost", id = 0x018E, targetCount = 2, equipped = true }
 }
 
@@ -472,6 +501,13 @@ local function LogAbilitySnapshot()
 end
 
 function _OnInit()
+    CanExecute = false
+    ReportLoggerFailure()
+
+    if not LoggerLoaded or not Logger.IsEnabled("PROBE") then
+        return
+    end
+
     local libraryLoaded, libraryOrError = pcall(require, "kh2lib")
 
     if not libraryLoaded then

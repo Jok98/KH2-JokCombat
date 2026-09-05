@@ -53,6 +53,23 @@ Conseguenze:
 - `DriveForms[5]` Final Mix è Summon e resta completamente intatto; le innate Anti sono già dati nativi PLRP, non stato da copiare nella save.
 - Le ricompense standard condivise Combo Plus/Air Combo Plus hanno gli stessi target del Combo Core e restano idempotenti in qualunque ordine di caricamento.
 
+### Decisione: Drop item base al 200% tramite Lucky Lucky native
+
+Status: active
+Area: drops
+
+Decisione:
+Garantire a Sora due copie equipaggiate di Lucky Lucky nella tabella ability standard, senza patchare l'eseguibile né modificare le ability degli altri personaggi.
+
+Rationale:
+In Final Mix il moltiplicatore nativo è `1 + (0,5 × copie equipaggiate dai personaggi in battaglia)`: due copie su Sora producono `2,0×` quando non esistono altri bonus. Forms possiede già Lucky Lucky e la tabella standard, quindi mantenere qui il target evita ownership duplicata.
+
+Conseguenze:
+- Il modulo aggiunge/equipaggia soltanto la seconda copia mancante e preserva copie estranee.
+- Ability o accessori Lucky Lucky aggiuntivi sui personaggi in battaglia possono superare il 200%; non vengono rimossi.
+- Le due copie risiedono nella save RAM e possono diventare persistenti se la partita viene salvata.
+- Il probe richiede due copie presenti e ON; lo smoke test verifica il target.
+
 ### Decisione: Combat native-first
 
 Status: active
@@ -66,7 +83,87 @@ Il motore nativo conserva compatibilità con animazioni, hitbox, targeting, dann
 
 Conseguenze:
 - Le patch Lua devono restare strette e verificabili.
-- La grammatica combo A/Y verrà progettata dopo la mappatura delle risorse native Sora.
+- La grammatica combo A/Quadrato viene progettata dopo la mappatura delle risorse native Sora.
+
+### Decisione: Grammatica A/Quadrato e Form proprietarie del moveset
+
+Status: active
+Area: combat architecture
+
+Decisione:
+Usare A come catena normale e Quadrato come ramo contestuale in ogni profilo di combattimento. Nel proof Normal corrente, Quadrato da neutrale conserva il selector Guard ma usa A319 Vicinity Break; durante una catena ground il record 32 conserva l'identità Upper Slash nativa e può variare soltanto la motion whitelisted. Y/Triangolo resta interamente nativo per Reaction Command e interazioni. La Form o stance corrente determina il catalogo di azioni; R2 seleziona il profilo o attiva un Drive Cancel.
+
+Rationale:
+Quadrato possiede già Guardia e le Action Ability PTYA complete di KH2, quindi riusarlo evita di competere con Reaction e permette al motore nativo di conservare targeting, motion, hitbox e danno. Il test live ha escluso l'aggiunta di tolleranza tramite write input in `_OnFrame`.
+
+Conseguenze:
+- Normal usa una profondita virtuale basata sugli A accettati: A1 da neutrale è immediato, A2+ richiede una nuova motion d'attacco. La profondità prepara il dato PTYA ma non può sostituire l'arbitraggio action/cancel del motore.
+- Le modifiche dei rami devono avvenire su record PTYA/action completi dello stesso carrier; nessun edge combat viene sintetizzato da Lua.
+- Y/Triangolo non viene scritto né intercettato; Reaction Command e interazioni restano native.
+- Base, Valor, Wisdom, Limit, Master e Final usano profili distinti con la stessa grammatica; Anti non diventa automaticamente una Form selezionabile.
+- Il Drive Cancel usa una vera transizione di Form ed è consentito inizialmente solo da neutrale o da cancel window esplicite.
+- Un eventuale aspetto visivo da Sora base per profili Dual o Anti non implica che il loro carrier tecnico debba essere il record Base.
+
+### Decisione respinta: V5 clona l'identità Guard nel record 32 ground
+
+Status: rejected
+Area: combat runtime
+
+Decisione:
+Non armare più l'identità Guard `Selector=11/Ability=0x01` nel record Base 32.
+Mantenere l'identità Upper Slash nativa `12/0x12`; F1 può riconoscere e
+ripristinare soltanto l'esatta firma legacy V5 con `Type=0`.
+
+Rationale:
+Il gameplay ha mostrato `depth=1`, record 32 con selector/ability Guard e motion
+A310 corretti, seguito da `SQUARE_RESULT REJECTED ... RESET_IDLE`. L'identità
+targetless del record 31 non trasferisce la sua eleggibilità alla posizione 32:
+il rifiuto avviene prima dell'avvio della motion.
+
+Conseguenze:
+- Non creare V6 basate su selector, ability, Type, score o nuove posizioni PTYA.
+- Il recupero F1 è one-shot e fail-closed; nessuna rotta riattiva `11/0x01`.
+- M-03C passa a una sonda pre-edge read-only del dispatcher/action state prima di
+  autorizzare qualunque nuova write.
+
+### Decisione: M-03C confronta soltanto contesti pre-edge omogenei
+
+Status: active
+Area: diagnostics
+
+Decisione:
+Usare il frame precedente all'edge Quadrato e confrontare almeno due
+`AFTER_A_ACCEPTED` con due `AFTER_A_REJECTED` soltanto quando motion, slot e
+finestra temporale coincidono. Scartare edge che risolvono un trial pendente o
+che avvengono con la motion attesa già attiva.
+
+Rationale:
+Le 57 differenze M-03B erano state acquisite dopo la dispatch. I log successivi
+hanno mescolato A302/A309/A310/A319 e contato due falsi trial, quindi un
+confronto per classe larga non può separare causa ed effetto.
+
+Conseguenze:
+- `ActionProbe` resta zero-write e usa `ReadArray` per il rolling snapshot.
+- `DISPATCH` mostra esiti e bucket; i dettagli frame-per-frame passano a `TRACE`.
+- Dopo il gate `2/2`, M-03D raggruppa le differenze byte in campi tipizzati e le correla a `+0x98/+0xA0` senza modificarle.
+- Nessuna candidata viene scritta senza una verifica semantica e version-safe.
+
+### Decisione: Palette R2 Normal, Dual, Feral e Drive Cancel
+
+Status: active
+Area: combat architecture
+
+Decisione:
+Usare R2 come palette di quattro opzioni: Normal con una Keyblade, Dual con due Keyblade e attacchi Roxas, Feral senza Keyblade e attacchi Anti, tutte base-looking, più Drive Cancel verso una vera Drive Form. Le prime tre sono stance persistenti; Drive Cancel è un comando one-shot.
+
+Rationale:
+Questa struttura integra identità base, dual-wield, stile ferale e Form native senza ridurre il combat allo spam di A né trapiantare ciecamente le action straniere nello stato Base.
+
+Conseguenze:
+- Normal usa il carrier Base; Dual e Feral devono usare carrier tecnici verificati anche se l'aspetto resta Sora base.
+- Il primo Drive Cancel viene provato su una sola Form e soltanto da neutrale o cancel window verificata.
+- Alla fine della Form si ripristina la stance precedente in uno stato valido.
+- Mapping esatto delle direzioni R2, feedback e selezione della Form armata restano dettagli implementativi del track `sora-combat-system`.
 
 ### Decisione: AP live di Sora al massimo del campo
 
@@ -85,21 +182,23 @@ Conseguenze:
 - Disabilitare il modulo rimuove la garanzia runtime; nessun AP Boost artificiale resta nella save.
 - Ogni valore live inferiore viene portato a 255; nessun valore maggiore è rappresentabile nel campo.
 
-### Decisione: Combat Core completo da subito
+### Decisione: Combat Core completo con profilo A-base
 
 Status: active
 Area: combo
 
 Decisione:
-Garantire tutte le 25 Action Ability standard di Sora, equipaggiare le 19 azioni operative e mantenere Auto Valor, Wisdom, Limit, Master, Final e Summon presenti ma disabilitate. Conservare inoltre Combo Master x1, Combo Plus x2 e Air Combo Plus x2 equipaggiati.
+Garantire tutte le 25 Action Ability standard di Sora, ma separare disponibilità e selezione nativa. Restano ON i sei carrier Quadrato Type 0 e Trinity Limit; le dodici speciali A Type 1/2/3 e le sei Auto restano presenti ma OFF. Conservare Combo Master x1, Combo Plus x2 e Air Combo Plus x2 equipaggiati.
 
 Rationale:
-Il focus è sperimentare subito l'intero moveset nativo di Sora; le Auto non aggiungono mosse e possono attivare Form/Limit involontariamente, mentre il nucleo combo deve mantenere continuità e lunghezza massime.
+M-03C ha registrato quattro rifiuti a vuoto partiti da A300, ma su hit KH2 sostituiva A con Flash Step A318 o Vicinity Break A319 e accettava il Quadrato. Disequipaggiare le speciali impedisce questa selezione automatica senza rimuoverle dalla lista; mantenere ON i carrier Type 0 conserva l'ownership fisica dei rami custom.
 
 Conseguenze:
+- A deve usare la catena Base `A300/A301/A302` anche in presenza di un bersaglio; la prova gameplay dopo F1 resta obbligatoria.
 - Il modulo riusa la tabella standard da 69 slot e non ricostruisce attacchi o combo in Lua.
 - Le copie già presenti vengono riusate; si aggiungono solo quelle mancanti e si verifica lo stato ON/OFF dopo ogni write.
-- Il test con costume KH1 deve coprire ogni Action perché alcune motion avanzate potrebbero non essere disponibili nel relativo MSET.
+- I record PTYA 32/34 conservano l'ability Type 0 ON e possono ricevere il MotionId di una speciale OFF; questo comportamento deve essere validato per ogni ramo.
+- Il test con costume KH1 deve coprire ogni motion custom perché alcune motion avanzate potrebbero non essere disponibili nel relativo MSET.
 - La progressione vanilla di Action e support combo viene intenzionalmente superata.
 
 ### Decisione: Tutte le Keyblade standard tranne Ultima Weapon
@@ -150,11 +249,32 @@ Rationale:
 Il Build ricompone `openkh/mod/kh2` da quella clone e sovrascrive le copie manuali, causando test di script diversi dai sorgenti analizzati.
 
 Conseguenze:
-- Il delta non committato è stato trasferito e verificato; la repository ChatGPT resta pulita e non è più una working copy attiva.
+- Uno staging sandbox può essere usato per preparare patch, ma ogni delta effettivo deve essere sincronizzato e hash-verificato nella clone OpenKH.
 - Trattare la cartella live come artefatto generato e verificarne gli hash dopo ogni Build.
+
+### Decisione: Log per categoria con un solo focus operativo
+
+Status: active
+Area: observability
+
+Decisione:
+Usare un solo modulo di logging con flag funzionali. Lasciare sempre visibili
+`ERROR` e `WARNING`; abilitare un solo focus operativo alla volta. Durante
+M-03C è ON soltanto `DISPATCH`; `COMBAT`, `SYSTEM`, `PROGRESSION`, `GUMMI`,
+`PROBE` e `TRACE` restano OFF.
+
+Rationale:
+I messaggi di progressione già applicata e i probe rendevano il log F1 quasi
+inutilizzabile durante lo sviluppo della combo Base.
+
+Conseguenze:
+- Per una diagnosi si abilita soltanto la categoria necessaria e si ricostruisce la mod.
+- `TRACE` possiede i dettagli della state machine; `COMBAT` registra il ramo custom utile.
+- `DISPATCH` è riservata ad `ActionProbe`; con il flag del proprio gruppo OFF i diagnostici non caricano `kh2lib` né svolgono lavoro per-frame.
 
 ## Decisioni sostituite o obsolete
 
+- La proposta di usare Y/Triangolo come ramo combo universale è sostituita da A/Quadrato; Y resta nativo per Reaction Command e interazioni.
 - Il profilo KH1 conservativo permanente è sostituito dall'attivazione delle cinque growth MAX: non aveva alcun segnale di transizione e disabilitava quattro ability dopo ogni F1/load anche nel costume KH2.
 - Il possesso di Valor come proxy dei vestiti KH2 è obsoleto perché Valor viene ora sbloccato intenzionalmente prima dell'evento vanilla.
 - Il post-landing Roxas non è più la priorità corrente; resta documentato solo come archivio tecnico.

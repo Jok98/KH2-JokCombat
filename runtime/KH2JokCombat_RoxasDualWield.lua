@@ -2,6 +2,38 @@ LUAGUI_NAME = "KH2 JokCombat - Roxas Dual Wield"
 LUAGUI_AUTH = "Jok"
 LUAGUI_DESC = "Enables native Roxas Dual-Wield and replaces Struggle Wand with Oblivion"
 
+local RawConsolePrint = ConsolePrint
+local LoggerLoaded, Logger = pcall(require, "KH2JokCombat_Log")
+if not LoggerLoaded then
+    LoggerLoaded, Logger = pcall(require, "runtime.KH2JokCombat_Log")
+end
+local LoggerLoadError = LoggerLoaded and nil or Logger
+
+local function ConsolePrint(message, level)
+    local category = level ~= nil and level >= 3 and "ERROR" or "SYSTEM"
+
+    if LoggerLoaded then
+        return Logger.Log("RoxasDualWield", category, message, level)
+    end
+
+    if category == "ERROR" then
+        RawConsolePrint(
+            "[RoxasDualWield][ERROR] " .. tostring(message),
+            level or 3
+        )
+    end
+end
+
+local function ReportLoggerFailure()
+    if not LoggerLoaded then
+        RawConsolePrint(
+            "[RoxasDualWield][ERROR] KH2JokCombat_Log non disponibile: "
+            .. tostring(LoggerLoadError),
+            3
+        )
+    end
+end
+
 local kh2lib = nil
 local CanExecute = false
 local MemtPatchCompleted = false
@@ -219,6 +251,7 @@ local function ApplyOblivion()
 end
 
 function _OnInit()
+    ReportLoggerFailure()
     local libraryLoaded, libraryOrError = pcall(require, "kh2lib")
 
     if not libraryLoaded then

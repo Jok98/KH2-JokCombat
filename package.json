@@ -1,0 +1,14 @@
+{
+  "name": "kh2-jokcombat",
+  "private": true,
+  "scripts": {
+    "test": "node tools/run_tests.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "fengari-node-cli": "0.1.0",
+    "yaml": "2.8.1"
+  }
+}

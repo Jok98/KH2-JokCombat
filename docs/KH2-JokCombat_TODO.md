@@ -6,7 +6,7 @@
 - Le sezioni Roxas restano come archivio tecnico e baseline funzionante; non sono più la priorità attiva.
 - Il focus corrente è Sora, a partire dall'inizio della sua storia.
 - Tutte le growth sono a livello MAX ed equipaggiate negli slot nativi; Movement ripristina High Jump, Quick Run, Dodge Roll, Aerial Dodge e Glide su ON a ogni F1/load. Non esiste un gate automatico del costume: sulle vecchie save con outfit KH1 le quattro growth avanzate restano incompatibili e possono produrre T-pose.
-- Combat Core: tutte le 25 Action Ability sono presenti; le 19 azioni operative sono equipaggiate, Auto Valor/Wisdom/Limit/Master/Final/Summon restano OFF e il nucleo Combo Master + Combo Plus `2 + 2` resta attivo.
+- Combat Core: tutte le 25 Action Ability sono presenti. I sei carrier Type 0 di Quadrato e Trinity Limit restano ON; le dodici tecniche speciali selezionabili automaticamente da A e le sei Auto restano presenti ma OFF. Combo Master + Combo Plus `2 + 2` resta attivo, così A usa la catena Base e Quadrato possiede i rami custom.
 - Le 23 Keyblade standard di Sora sono disponibili subito; Ultima Weapon, armi debug, Struggle e dummy Form restano escluse. Per eliminare lo stato `? ----`, Master riceve Bond of Flame e Final Oblivion solo quando il relativo weapon slot è zero; ogni scelta nonzero resta preservata.
 - Il Gummi Ship Cost Limit viene portato al massimo sicuro 1200 tramite il solo livello persistente `Save+0x10F0A = 6`; inventario blocchi, missioni e Teeny Ship restano invariati e valori fuori range non vengono forzati.
 - Le modifiche future devono usare il flag storia Sora e non riaprire il workstream Roxas salvo regressioni esplicite.
@@ -17,7 +17,7 @@ Trasformare il combat di Kingdom Hearts II Final Mix in un sistema più orientat
 
 - Roxas Dual-Wield come base iniziale.
 - Oathkeeper + Oblivion come coppia di Keyblade.
-- Combo branching futuro basato principalmente su input A / Y.
+- Combo branching futuro basato principalmente su input A / Quadrato; Y/Triangolo resta nativo.
 - Riutilizzo del combat engine nativo di KH2 quando possibile.
 - Lua runtime solo quando serve davvero.
 - Modifiche MSET/ANB/PTYA/ATKP native per comportamento, animazioni e hit properties.
@@ -394,5 +394,5 @@ Il sistema finale dovrà essere basato su moveset completi e fallback controllat
 2. Validare in gameplay Master con Bond of Flame e Final con Oblivion: apertura menu, cambio arma, trasformazione e ritorno non devono causare crash.
 3. Validare le cinque growth ability MAX e il nucleo combo Sora completo.
 4. Mappare movement, attacchi, finisher e cancel nativi di Sora.
-5. Definire la combo architecture A/Y, poi regolare ATKP, cancel e feeling Musou mantenendo il motore nativo.
+5. Validare la combo architecture A/Quadrato, poi regolare ATKP, cancel e feeling Musou mantenendo il motore nativo; Y/Triangolo resta dedicato alle ownership native.
 6. Conservare Roxas come baseline chiusa; riaprirlo solo per regressioni esplicite.

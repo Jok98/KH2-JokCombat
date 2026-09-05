@@ -2,6 +2,39 @@ LUAGUI_NAME = "KH2 JokCombat - Sora Forms"
 LUAGUI_AUTH = "Jok"
 LUAGUI_DESC = "Unlocks every Drive Form, maxes form progression, Sora AP and native form rewards"
 
+local RawConsolePrint = ConsolePrint
+local LoggerLoaded, Logger = pcall(require, "KH2JokCombat_Log")
+if not LoggerLoaded then
+    LoggerLoaded, Logger = pcall(require, "runtime.KH2JokCombat_Log")
+end
+local LoggerLoadError = LoggerLoaded and nil or Logger
+
+local function ConsolePrint(message, level, category)
+    local resolvedCategory = category or "PROGRESSION"
+
+    if level ~= nil and level >= 3 then
+        resolvedCategory = "ERROR"
+    end
+
+    if LoggerLoaded then
+        return Logger.Log("Forms", resolvedCategory, message, level)
+    end
+
+    if resolvedCategory == "ERROR" then
+        RawConsolePrint("[Forms][ERROR] " .. tostring(message), level or 3)
+    end
+end
+
+local function ReportLoggerFailure()
+    if not LoggerLoaded then
+        RawConsolePrint(
+            "[Forms][ERROR] KH2JokCombat_Log non disponibile: "
+            .. tostring(LoggerLoadError),
+            3
+        )
+    end
+end
+
 local kh2lib = nil
 local CanExecute = false
 local PatchCompleted = false
@@ -141,12 +174,14 @@ local DRIVE_FORMS = {
     }
 }
 
--- Exact vanilla FMLV rewards earned while leveling all five normal forms.
+-- Native FMLV rewards earned while leveling all five normal forms.
 -- Growth rewards are represented by the five dedicated base-Sora slots and by
 -- each form's first ability slot. Combo Plus and Air Combo Plus intentionally
 -- share the same target counts as Sora Combat Core, making both modules
 -- idempotent regardless of Lua load order. Auto Form rewards remain present
 -- for completeness but are deliberately written without the equipped bit.
+-- Lucky Lucky intentionally targets two equipped copies: in Final Mix the
+-- native 1 + (0.5 * equipped copies) formula yields a 2.0x base item-drop rate.
 local FORM_REWARD_ABILITIES = {
     { name = "Auto Valor", id = 0x0181, targetCount = 1, equipped = false },
     { name = "Auto Wisdom", id = 0x0182, targetCount = 1, equipped = false },
@@ -157,7 +192,7 @@ local FORM_REWARD_ABILITIES = {
     { name = "MP Rage", id = 0x019C, targetCount = 1 },
     { name = "MP Haste", id = 0x019D, targetCount = 1 },
     { name = "Draw", id = 0x0195, targetCount = 1 },
-    { name = "Lucky Lucky", id = 0x0197, targetCount = 1 },
+    { name = "Lucky Lucky", id = 0x0197, targetCount = 2 },
     { name = "Air Combo Plus", id = 0x00A3, targetCount = 2 },
     { name = "Form Boost", id = 0x018E, targetCount = 2 }
 }
@@ -833,7 +868,7 @@ local function EnableAllForms()
     VerifyFormRewards()
 
     ConsolePrint(string.format(
-        "Sora Forms pronto: Valor/Wisdom/Limit/Master/Final LV7, Anti sbloccata, Drive 9/9, AP 255; tutte le Auto Form sono presenti ma disabilitate (%d aggiornamenti).",
+        "Sora Forms pronto: Valor/Wisdom/Limit/Master/Final LV7, Anti sbloccata, Drive 9/9, AP 255, drop item base 200%%; tutte le Auto Form sono presenti ma disabilitate (%d aggiornamenti).",
         #writes
     ), 1)
 
@@ -851,6 +886,7 @@ local function EnableAllForms()
 end
 
 function _OnInit()
+    ReportLoggerFailure()
     CanExecute = false
     PatchCompleted = false
     PatchDisabled = false
@@ -880,7 +916,8 @@ function _OnInit()
 
     ConsolePrint(
         "Sora Forms inizializzato: attendo Sora in forma base.",
-        1
+        1,
+        "SYSTEM"
     )
 end
 

@@ -104,7 +104,7 @@ local EXPECTED_FORMS = {
 
 local EXPECTED_ACTIVE_REWARDS = {
     0x00A2, 0x00A2, 0x019C, 0x019D, 0x0195,
-    0x0197, 0x00A3, 0x00A3, 0x018E, 0x018E
+    0x0197, 0x0197, 0x00A3, 0x00A3, 0x018E, 0x018E
 }
 
 local EXPECTED_DISABLED_AUTOS = {
@@ -189,6 +189,9 @@ end
 memory[SAVE + 0x340C + 0x02] = 6
 memory[SAVE + 0x340C + 0x08] = 0x8ABC
 
+local Logger = require("runtime.KH2JokCombat_Log")
+Logger.SetEnabled("PROGRESSION", true)
+
 dofile("runtime/KH2JokCombat_Forms.lua")
 _OnInit()
 _OnFrame()
@@ -238,6 +241,11 @@ for targetId, targetCount in pairs(CountTargets(EXPECTED_ACTIVE_REWARDS)) do
         string.format("standard reward 0x%04X", targetId)
     )
 end
+
+assert(
+    CountEquipped(standardAddress, 69, 0x0197) == 2,
+    "Lucky Lucky x2 does not provide the 200% base item-drop target"
+)
 
 for _, targetId in ipairs(EXPECTED_DISABLED_AUTOS) do
     assert(

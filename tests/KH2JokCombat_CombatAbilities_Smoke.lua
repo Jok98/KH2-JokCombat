@@ -43,11 +43,13 @@ package.preload.kh2lib = function()
     }
 end
 
-local ACTIVE_ACTIONS = {
-    0x0052, 0x0089, 0x010F, 0x010B, 0x0111,
-    0x0106, 0x0107, 0x022F, 0x0108, 0x0232,
-    0x0109, 0x010A, 0x010D, 0x0230, 0x010E,
-    0x0110, 0x0231, 0x010C, 0x00C6
+local SQUARE_AND_COMMAND_ACTIONS = {
+    0x0052, 0x0089, 0x010F, 0x010B, 0x0111, 0x010C, 0x00C6
+}
+
+local DISABLED_A_SPECIALS = {
+    0x0106, 0x0107, 0x022F, 0x0108, 0x0232, 0x0109,
+    0x010A, 0x010D, 0x0230, 0x010E, 0x0110, 0x0231
 }
 
 local DISABLED_AUTOS = {
@@ -105,16 +107,31 @@ memory[SAVE + 0x2546] = 0x8181
 memory[SAVE + 0x2548] = 0x8238
 memory[SAVE + 0x254A] = 0x80A2
 memory[SAVE + 0x254C] = 0x80A3
+memory[SAVE + 0x254E] = 0x822F
 memory[SAVE + 0x2544 + (68 * 2)] = 0x8ABC
+
+local Logger = require("runtime.KH2JokCombat_Log")
+Logger.SetEnabled("PROGRESSION", true)
 
 dofile("runtime/KH2JokCombat_ComboMaster.lua")
 _OnInit()
 _OnFrame()
 
-for _, targetId in ipairs(ACTIVE_ACTIONS) do
+for _, targetId in ipairs(SQUARE_AND_COMMAND_ACTIONS) do
     assert(
         CountEquipped(targetId) >= 1,
-        string.format("Action 0x%04X not equipped", targetId)
+        string.format("Square/command Action 0x%04X not equipped", targetId)
+    )
+end
+
+for _, targetId in ipairs(DISABLED_A_SPECIALS) do
+    assert(
+        CountPresent(targetId) >= 1,
+        string.format("A-special 0x%04X missing", targetId)
+    )
+    assert(
+        CountEquipped(targetId) == 0,
+        string.format("A-special 0x%04X still equipped", targetId)
     )
 end
 
@@ -151,12 +168,14 @@ _OnFrame()
 memory[NOW + 0x00] = 0x02
 memory[SAVE + 0x2544] = 0x0052
 memory[SAVE + 0x2546] = 0x8181
+memory[SAVE + 0x254E] = 0x822F
 
 local writesBeforeRepair = writeCount
 _OnFrame()
 assert(memory[SAVE + 0x2544] == 0x8052, "active Action was not repaired")
 assert(memory[SAVE + 0x2546] == 0x0181, "Auto Action was not disabled again")
-assert(writeCount == writesBeforeRepair + 2, "load repair touched extra slots")
+assert(memory[SAVE + 0x254E] == 0x022F, "A-special was not disabled again")
+assert(writeCount == writesBeforeRepair + 3, "load repair touched extra slots")
 
 local successfulWriteCount = writeCount
 
@@ -176,6 +195,6 @@ assert(writeCount == 0, "capacity failure performed partial writes")
 assert(memory[SAVE + 0x2544] == 0x8ABC, "capacity failure changed the table")
 
 print(string.format(
-    "OK KH2JokCombat_CombatAbilities smoke test (%d verified writes + fail-closed case)",
+    "OK KH2JokCombat_CombatAbilities smoke test (A-base profile, %d verified writes + fail-closed case)",
     successfulWriteCount
 ))

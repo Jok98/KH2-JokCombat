@@ -2,6 +2,39 @@ LUAGUI_NAME = "KH2 JokCombat - Gummi Cost Limit"
 LUAGUI_AUTH = "Jok"
 LUAGUI_DESC = "Keeps the Gummi Ship construction Cost Limit at the safe maximum of 1200"
 
+local RawConsolePrint = ConsolePrint
+local LoggerLoaded, Logger = pcall(require, "KH2JokCombat_Log")
+if not LoggerLoaded then
+    LoggerLoaded, Logger = pcall(require, "runtime.KH2JokCombat_Log")
+end
+local LoggerLoadError = LoggerLoaded and nil or Logger
+
+local function ConsolePrint(message, level, category)
+    local resolvedCategory = category or "GUMMI"
+
+    if level ~= nil and level >= 3 then
+        resolvedCategory = "ERROR"
+    end
+
+    if LoggerLoaded then
+        return Logger.Log("GummiCost", resolvedCategory, message, level)
+    end
+
+    if resolvedCategory == "ERROR" then
+        RawConsolePrint("[GummiCost][ERROR] " .. tostring(message), level or 3)
+    end
+end
+
+local function ReportLoggerFailure()
+    if not LoggerLoaded then
+        RawConsolePrint(
+            "[GummiCost][ERROR] KH2JokCombat_Log non disponibile: "
+            .. tostring(LoggerLoadError),
+            3
+        )
+    end
+end
+
 local kh2lib = nil
 local CanExecute = false
 local PatchDisabled = false
@@ -99,6 +132,7 @@ local function EnsureGummiCostLimit()
 end
 
 function _OnInit()
+    ReportLoggerFailure()
     CanExecute = false
     PatchDisabled = false
     PatchReported = false
@@ -128,7 +162,8 @@ function _OnInit()
 
     ConsolePrint(
         "Gummi Cost Limit inizializzato: attendo una save Sora caricata.",
-        1
+        1,
+        "SYSTEM"
     )
 end
 

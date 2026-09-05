@@ -2,6 +2,39 @@ LUAGUI_NAME = "KH2 JokCombat - Sora Keyblades"
 LUAGUI_AUTH = "Jok"
 LUAGUI_DESC = "Unlocks Sora Keyblades and initializes empty Master/Final weapon slots"
 
+local RawConsolePrint = ConsolePrint
+local LoggerLoaded, Logger = pcall(require, "KH2JokCombat_Log")
+if not LoggerLoaded then
+    LoggerLoaded, Logger = pcall(require, "runtime.KH2JokCombat_Log")
+end
+local LoggerLoadError = LoggerLoaded and nil or Logger
+
+local function ConsolePrint(message, level, category)
+    local resolvedCategory = category or "PROGRESSION"
+
+    if level ~= nil and level >= 3 then
+        resolvedCategory = "ERROR"
+    end
+
+    if LoggerLoaded then
+        return Logger.Log("Keyblades", resolvedCategory, message, level)
+    end
+
+    if resolvedCategory == "ERROR" then
+        RawConsolePrint("[Keyblades][ERROR] " .. tostring(message), level or 3)
+    end
+end
+
+local function ReportLoggerFailure()
+    if not LoggerLoaded then
+        RawConsolePrint(
+            "[Keyblades][ERROR] KH2JokCombat_Log non disponibile: "
+            .. tostring(LoggerLoadError),
+            3
+        )
+    end
+end
+
 local kh2lib = nil
 local CanExecute = false
 local PatchCompleted = false
@@ -168,6 +201,7 @@ local function BuildPatchPlan()
             end
 
             weaponWrites[#weaponWrites + 1] = {
+                kind = "short",
                 default = default,
                 address = snapshot.address,
                 before = snapshot.before,
@@ -215,6 +249,7 @@ local function BuildPatchPlan()
 
         if desired ~= before then
             inventoryWrites[#inventoryWrites + 1] = {
+                kind = "byte",
                 keyblade = keyblade,
                 address = kh2lib.Save + keyblade.inventoryOffset,
                 before = before,
@@ -280,6 +315,64 @@ local function VerifyTargets()
     end
 end
 
+local function ReadPlannedValue(write)
+    if write.kind == "short" then
+        return ReadShort(write.address)
+    end
+    return ReadByte(write.address)
+end
+
+local function WritePlannedValue(write, value)
+    if write.kind == "short" then
+        WriteShort(write.address, value)
+    else
+        WriteByte(write.address, value)
+    end
+end
+
+local function ApplyPlannedWrite(write, attemptedWrites)
+    -- Journal before calling the backend: it may throw after changing RAM.
+    attemptedWrites[#attemptedWrites + 1] = write
+    WritePlannedValue(write, write.desired)
+    local after = ReadPlannedValue(write)
+
+    if after ~= write.desired then
+        error(string.format(
+            "Verifica Keyblade fallita a %s: atteso %s, letto %s",
+            Hex(write.address, 8), Hex(write.desired, 4), Hex(after, 4)
+        ))
+    end
+end
+
+local function RollbackAttemptedWrites(attemptedWrites)
+    local failures = {}
+
+    for index = #attemptedWrites, 1, -1 do
+        local write = attemptedWrites[index]
+        local restored, restoreError = pcall(function()
+            local current = ReadPlannedValue(write)
+            if current == write.before then
+                return
+            end
+            if current ~= write.desired then
+                error("valore estraneo preservato: " .. Hex(current, 4))
+            end
+
+            WritePlannedValue(write, write.before)
+            if ReadPlannedValue(write) ~= write.before then
+                error("verifica ripristino fallita")
+            end
+        end)
+
+        if not restored then
+            failures[#failures + 1] = Hex(write.address, 8)
+                .. ": " .. tostring(restoreError)
+        end
+    end
+
+    return failures
+end
+
 local function ApplyKeybladeInventory()
     local plan = BuildPatchPlan()
 
@@ -311,38 +404,26 @@ local function ApplyKeybladeInventory()
         end
     end
 
-    for _, write in ipairs(plan.weaponWrites) do
-        WriteShort(write.address, write.desired)
-
-        local after = ReadShort(write.address)
-
-        if after ~= write.desired then
-            error(string.format(
-                "Verifica weapon slot %s fallita a Save+%s: %s",
-                write.default.slotName,
-                Hex(write.default.slotOffset, 4),
-                Hex(after, 4)
-            ))
+    local attemptedWrites = {}
+    local applied, applyError = pcall(function()
+        for _, write in ipairs(plan.weaponWrites) do
+            ApplyPlannedWrite(write, attemptedWrites)
         end
-    end
-
-    for _, write in ipairs(plan.inventoryWrites) do
-        WriteByte(write.address, write.desired)
-
-        local after = ReadByte(write.address)
-
-        if after ~= write.desired then
-            error(string.format(
-                "Verifica %s fallita a Save+%s: %d",
-                write.keyblade.name,
-                Hex(write.keyblade.inventoryOffset, 4),
-                after
-            ))
+        for _, write in ipairs(plan.inventoryWrites) do
+            ApplyPlannedWrite(write, attemptedWrites)
         end
-    end
+        VerifyOwnership(plan)
+        VerifyTargets()
+    end)
 
-    VerifyOwnership(plan)
-    VerifyTargets()
+    if not applied then
+        local rollbackFailures = RollbackAttemptedWrites(attemptedWrites)
+        if #rollbackFailures > 0 then
+            error(tostring(applyError) .. "; rollback incompleto: "
+                .. table.concat(rollbackFailures, "; "))
+        end
+        error(tostring(applyError) .. "; rollback verificato")
+    end
 
     ConsolePrint(string.format(
         "Keyblade Sora pronte: 23/23 standard, %d aggiunte e %d gia possedute/equipaggiate.",
@@ -376,6 +457,7 @@ local function ApplyKeybladeInventory()
 end
 
 function _OnInit()
+    ReportLoggerFailure()
     CanExecute = false
     PatchCompleted = false
     PatchDisabled = false
@@ -405,7 +487,8 @@ function _OnInit()
 
     ConsolePrint(
         "Sora Keyblades inizializzato: attendo gameplay Sora.",
-        1
+        1,
+        "SYSTEM"
     )
 end
 

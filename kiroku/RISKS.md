@@ -2,6 +2,28 @@
 
 ## Rischi aperti
 
+### Rischio: Attacchi Roxas o Anti forzati sullo stato tecnico Base
+
+Condizione:
+La stance Dual o Feral richiama direttamente action o motion Roxas/Anti mentre il player resta `P_EX100` base con MSET, skeleton e weapon state originali.
+
+Impatto:
+Possibili T-pose, secondo Keyblade assente o agganciato male, weapon hide errato, VFX/hitbox/danno mancanti, transizioni invalide o crash.
+
+Mitigazione:
+Separare aspetto visivo e carrier tecnico: provare un profilo dual-wield e uno Anti realmente compatibili, costruendo se necessario varianti base-looking per i loro skeleton. Mappare PTYA, MSET/ANB, ATKP, weapon bone e ritorno a Base prima di abilitare la stance; fallire chiuso se una dipendenza non è verificata.
+
+### Rischio: Drop oltre il 200% con Lucky Lucky aggiuntive
+
+Condizione:
+Sora, Donald, Goofy o un altro personaggio attivo possiede ulteriori Lucky Lucky tramite ability o accessori oltre alle due garantite dal modulo.
+
+Impatto:
+La formula nativa somma tutte le copie equipaggiate in battaglia e il moltiplicatore item supera `2,0×`.
+
+Mitigazione:
+Trattare il 200% come baseline garantita da Sora e non come cap distruttivo; per una prova esatta, disabilitare temporaneamente gli altri bonus Lucky Lucky senza farli rimuovere dal runtime.
+
 ### Rischio: Valori Gummi oltre il massimo sicuro
 
 Condizione:
@@ -35,16 +57,16 @@ Square o il secondo salto possono tornare a produrre T-pose.
 Mitigazione:
 Non usare né salvare il profilo all-growth su una vecchia save KH1. Se quel tratto dovrà essere supportato di nuovo, introdurre prima un segnale diretto del modello attivo e testare entrambi i rami; non usare Valor o un flag storia ipotetico.
 
-### Rischio: Action avanzate nel MSET del costume KH1
+### Rischio: motion speciali OFF non accettate dal carrier Quadrato
 
 Condizione:
-Una delle Action Ability sbloccate richiama una motion non disponibile o incompatibile in `P_EX100_KH1F.mset`.
+Il motore richiede anche il bit equipaggiato della speciale corrispondente alla motion, oppure il costume KH1 non contiene una motion avanzata richiamata dal carrier Type 0.
 
 Impatto:
-L'attacco può produrre T-pose, blocco temporaneo o una transizione errata, come già osservato con alcune growth.
+Il ramo Quadrato può essere rifiutato, produrre T-pose, bloccarsi o usare una transizione errata, anche se A resta correttamente su A300.
 
 Mitigazione:
-Provare le 19 Action operative una per volta dopo Build/F1, senza salvare finché il set non è validato. Non importare motion in massa: isolare prima l'Action e lo slot nativo responsabile.
+Mantenere ON i sei carrier Type 0 e cambiare soltanto MotionId whitelisted. Dopo F1 provare prima A300 su hit/miss, poi ogni ramo Quadrato uno alla volta senza salvare; non importare motion in massa e non dichiarare valida una tecnica dalla sola animazione.
 
 ### Rischio: Persistenza e ricompense Keyblade successive
 
@@ -115,6 +137,28 @@ Lavorare nella clone OpenKH canonica, lasciare che Mods Manager componga la cart
 Stato corrente:
 I sorgenti sono nella clone OpenKH canonica. La cartella live deve essere rigenerata per eliminare il vecchio override KH1 prima del prossimo test.
 
+### Rischio: PTYA live o profondita virtuale divergono dal motore
+
+Condizione:
+Un altro mod altera i record Base 31/32/34, il selector Guard conserva semantica difensiva con A319 oppure un edge A campionato non viene realmente accettato nella cancel window.
+
+Impatto:
+Il router potrebbe scegliere la famiglia Quadrato sbagliata o sovrascrivere dati non propri.
+
+Mitigazione:
+Verificare struttura e campi immutabili prima della prima write, accettare record 31 soltanto in A322/A319 e mantenere record 32 su `12/0x12`; `11/0x01` è soltanto una firma legacy da recuperare a F1. Validare motion, hitbox/danno e recovery separatamente; A2+ avanza solo dopo una diversa motion Base entro 30 frame. Un valore estraneo disabilita il modulo senza write.
+
+### Rischio: Candidate dispatcher correlate ma non causali
+
+Condizione:
+Gli snapshot M-03B hanno evidenziato 57 byte stabili fra Quadrato neutrale e `A□`, ma erano acquisiti dopo la dispatch e rappresentavano motion, transform, timer o altri effetti della decisione. Campioni con motion diverse e edge mentre A310 era già attiva hanno inoltre prodotto falsi confronti.
+
+Impatto:
+Una patch prematura può corrompere lo stato action, rubare input nativi o produrre crash pur passando un test mock.
+
+Mitigazione:
+M-03C resta read-only, conserva il frame precedente con `ReadArray`, esclude risoluzioni duplicate/motion già attive e ha chiuso `2/2` nello stesso bucket. M-03D ha ristretto il candidato al bit 25 di `PLAYER+0x120`; M-03E ne osserva soltanto le transizioni su A300/A301/A302. Nessuna candidata diventa scrivibile senza identità version-safe, semantica verificata, timing, rollback e test gameplay dedicato.
+
 ### Rischio: Mancanza di test Lua automatico
 
 Condizione:
@@ -124,7 +168,7 @@ Impatto:
 Errori sintattici o differenze runtime emergono solo al caricamento F1.
 
 Mitigazione:
-Eseguire controlli statici, mantenere codice semplice e verificare la console LuaBackend prima di salvare.
+Eseguire gli smoke Fengari per sintassi, state machine e fail-closed; verificare comunque la console LuaBackend e il gameplay reale perché il mock non prova dispatch, hitbox o recovery.
 
 ## Rischi accettati
 
@@ -143,3 +187,4 @@ Eseguire controlli statici, mantenere codice semplice e verificare la console Lu
 - L'ipotesi che l'import delle motion standard rendesse sicure le growth nel costume KH1 è stata falsificata dal gameplay; asset e manifest entry sono stati rimossi.
 - Lo sblocco delle Drive Form non è una correzione della T-pose: resta una funzione di progressione separata, mentre il problema segue le growth base equipaggiate.
 - L'uso di Valor anticipato come proxy del costume è chiuso: Movement non legge quel bit e non applica un profilo outfit condizionale non verificato.
+- V5 Guard32 è respinta: il motore ha letto selector/ability e A310 corretti nel record 32 ma ha restituito `RESET_IDLE` senza avviare la motion; F1 conserva soltanto il recupero della firma legacy.

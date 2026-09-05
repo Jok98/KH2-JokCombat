@@ -2,6 +2,39 @@ LUAGUI_NAME = "KH2 JokCombat - Sora Movement"
 LUAGUI_AUTH = "Jok"
 LUAGUI_DESC = "Keeps all five Sora growth abilities equipped at MAX"
 
+local RawConsolePrint = ConsolePrint
+local LoggerLoaded, Logger = pcall(require, "KH2JokCombat_Log")
+if not LoggerLoaded then
+    LoggerLoaded, Logger = pcall(require, "runtime.KH2JokCombat_Log")
+end
+local LoggerLoadError = LoggerLoaded and nil or Logger
+
+local function ConsolePrint(message, level, category)
+    local resolvedCategory = category or "PROGRESSION"
+
+    if level ~= nil and level >= 3 then
+        resolvedCategory = "ERROR"
+    end
+
+    if LoggerLoaded then
+        return Logger.Log("Movement", resolvedCategory, message, level)
+    end
+
+    if resolvedCategory == "ERROR" then
+        RawConsolePrint("[Movement][ERROR] " .. tostring(message), level or 3)
+    end
+end
+
+local function ReportLoggerFailure()
+    if not LoggerLoaded then
+        RawConsolePrint(
+            "[Movement][ERROR] KH2JokCombat_Log non disponibile: "
+            .. tostring(LoggerLoadError),
+            3
+        )
+    end
+end
+
 local kh2lib = nil
 local CanExecute = false
 local PatchCompleted = false
@@ -145,6 +178,7 @@ local function ApplyMovementProfile()
 end
 
 function _OnInit()
+    ReportLoggerFailure()
     CanExecute = false
     PatchCompleted = false
     PatchDisabled = false
@@ -174,7 +208,8 @@ function _OnInit()
 
     ConsolePrint(
         "Sora Movement inizializzato: attendo gameplay Sora.",
-        1
+        1,
+        "SYSTEM"
     )
 end
 

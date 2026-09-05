@@ -4,6 +4,15 @@ description: "Native-first combat overhaul prototype for Kingdom Hearts II Final
 game: kh2
 
 assets:
+- name: 00battle.bin
+  method: binarc
+  source:
+  - name: ptya
+    method: copy
+    source:
+    - name: assets/00battle/ptya.list
+    type: list
+
 - name: obj/P_EX110_BTLF.mset
   method: copy
   source:
@@ -14,10 +23,20 @@ assets:
   source:
   - name: runtime/KH2JokCombat_RoxasDualWield.lua
 
+- name: scripts/io_packages/KH2JokCombat_Log.lua
+  method: copy
+  source:
+  - name: runtime/KH2JokCombat_Log.lua
+
 - name: scripts/KH2JokCombat_ComboMaster.lua
   method: copy
   source:
   - name: runtime/KH2JokCombat_ComboMaster.lua
+
+- name: scripts/KH2JokCombat_NormalCombo.lua
+  method: copy
+  source:
+  - name: runtime/KH2JokCombat_NormalCombo.lua
 
 - name: scripts/KH2JokCombat_Forms.lua
   method: copy
@@ -48,3 +67,18 @@ assets:
   method: copy
   source:
   - name: diagnostics/KH2JokCombat_AbilityProbe.lua
+
+- name: scripts/KH2JokCombat_CombatProbe.lua
+  method: copy
+  source:
+  - name: diagnostics/KH2JokCombat_CombatProbe.lua
+
+- name: scripts/KH2JokCombat_TargetlessProbe.lua
+  method: copy
+  source:
+  - name: diagnostics/KH2JokCombat_TargetlessProbe.lua
+
+- name: scripts/KH2JokCombat_ActionProbe.lua
+  method: copy
+  source:
+  - name: diagnostics/KH2JokCombat_ActionProbe.lua

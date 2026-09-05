@@ -2,6 +2,32 @@
 
 ## In corso
 
+### Attività: Ridurre e categorizzare i log runtime
+
+Status: ongoing
+
+Completamento:
+Dopo Build e F1, il profilo M-03C mostra soltanto errori, avvisi e righe
+`DISPATCH`; i flag centrali riattivano singolarmente le altre categorie. Con
+`PROBE = false` i quattro diagnostici storici restano inerti e con
+`DISPATCH = false` anche `ActionProbe` non carica `kh2lib` né lavora per-frame.
+
+Note:
+- La suite comprende 12 smoke Lua, 3 test Python, manifest e hash PTYA; `pnpm test` usa dipendenze bloccate nel repository. Le fix di settembre richiedono una nuova Build prima della prova live.
+- M-03D ha ristretto il candidato al bit 25 di `PLAYER+0x120`; M-03E lo traccia su A300/A301/A302 con sole righe `START/BIT25/EXIT` e nessuna write.
+
+### Attività: Portare il drop item base al 200%
+
+Status: ongoing
+
+Completamento:
+Dopo OpenKH Build e F1, l'Ability Probe mostra Lucky Lucky `x2`, entrambe ON, e il runtime non altera le ability degli altri personaggi; senza ulteriori Lucky Lucky in battaglia il moltiplicatore item è `2,0×`.
+
+Note:
+- `KH2JokCombat_Forms.lua` possiede già Lucky Lucky nella tabella standard e ora ne garantisce due copie equipaggiate.
+- La formula nativa Final Mix è `1 + (0,5 × copie equipaggiate dai personaggi in battaglia)`; bonus aggiuntivi possono superare il 200% e vengono preservati.
+- Probe e smoke test sono allineati sul target `x2`; la validazione gameplay resta separata.
+
 ### Attività: Portare il Cost Limit Gummi al massimo sicuro
 
 Status: ongoing
@@ -33,13 +59,14 @@ Note:
 Status: ongoing
 
 Completamento:
-Dopo OpenKH Build e F1, il menu mostra tutte le 25 Action Ability; le 19 azioni operative, inclusa Trinity Limit, funzionano nel costume KH1, mentre Auto Valor/Wisdom/Limit/Master/Final/Summon restano presenti ma disabilitate senza T-pose o attivazioni involontarie.
+Dopo F1, il menu mostra tutte le 25 Action Ability; A usa A300 sia a vuoto sia su bersaglio, mentre i sei carrier Quadrato e Trinity restano operativi. Le dodici speciali A e le sei Auto risultano presenti ma OFF senza T-pose o attivazioni involontarie.
 
 Note:
 - Il file storico `KH2JokCombat_ComboMaster.lua` ora possiede Action e support combo nella tabella standard da 69 slot.
 - Combo Master x1, Combo Plus x2 e Air Combo Plus x2 restano equipaggiati.
+- I log live precedenti hanno separato `A300` a vuoto `0/4` da hit accettati partiti su A318/A319; il profilo A-base elimina la selezione contestuale che impediva un confronto omogeneo.
 - Il piano è transazionale: capacità e valori vengono letti prima della prima write; ability estranee restano intatte.
-- Smoke test Lupa: 30 write verificate, riparazione dopo load, idempotenza e capacità insufficiente fail-closed senza write parziali.
+- Smoke test Lupa: profilo A-base con 31 write verificate, riparazione dopo load, idempotenza e capacità insufficiente fail-closed senza write parziali.
 
 ### Attività: Sbloccare e massimizzare tutte le Drive Form
 
@@ -73,17 +100,7 @@ Note:
 
 ## TODO
 
-### Attività: Mappare il moveset nativo Sora
-
-Status: todo
-Completion:
-Esiste una tabella verificata di attacchi ground/air, finisher, cancel e relative catene PTYA → motion → MSET/ANB → ATKP.
-
-### Attività: Definire la grammatica combo A/Y
-
-Status: todo
-Completion:
-I rami A/Y hanno input, transizioni, comportamento ground/air e condizioni di finisher documentati e verificabili.
+- Il combat system Sora è gestito dal track attivo `tracks/sora-combat-system/`; milestone, attività e criteri di completamento non vengono duplicati qui.
 
 ## Bloccato
 
@@ -91,20 +108,21 @@ I rami A/Y hanno input, transizioni, comportamento ground/air e condizioni di fi
 
 ## Fatto
 
+- Corrette invalidazione della cache PTYA e transazioni Keyblade con rollback verificato; regressioni dedicate a relocation/unload, errori dopo write e valori estranei. Runner e lockfile rendono riproducibili i controlli senza dipendere da `%TEMP%`.
 - Repository aggiornata a `222bbf1` prima del nuovo lavoro.
 - MSET Roxas confrontato con il vanilla: cinque sole entry modificate.
 - Modulo Sora Movement dotato di guardia identità, validazione preventiva e verifica post-write; il target corrente è all-growth MAX/ON.
 - Modulo Combo Master convertito in Sora Combo Core con target `1 + 2 + 2`, deduplica e verifica post-write.
 - Ability Probe limitato a Sora e predisposto a registrare tutte le copie del nucleo combo.
 - Identificato il rebuild OpenKH come causa del disallineamento tra repository ChatGPT, clone installata e script live.
-- Trasferiti e verificati con SHA-256 tutti i file modificati e Kiroku nella clone OpenKH canonica; la vecchia repository ChatGPT è pulita.
+- La clone OpenKH è la sorgente effettiva; la copia ChatGPT può contenere staging e non rappresenta lo stato Git da pubblicare.
 - Creato e testato `P_EX100_KH1F_JokCombat.mset`: sette import ANB vanilla e nessun altro delta logico, ma T-pose invariata; esperimento poi rimosso.
 - Hub Kiroku inizializzato con contesto verificato.
 - Verificato il merge della PR precedente e aggiornato `main` alla merge commit `cca034c`.
 - Aggiunto `KH2JokCombat_Forms.lua` con unlock nativi, Level 7, innate PLRP, ricompense FMLV, Drive 9/9, guardie fail-closed e verifica post-write.
 - Esteso l'Ability Probe con bit Form, progressione, weapon slot, 24 ability slot e stato Drive.
 - Portati gli AP live di Sora a 255 nel modulo Forms, preservando il contatore AP Boost persistente.
-- Esteso il Combat Core alle 25 Action Ability con 19 azioni operative ON, sei Auto OFF e probe/test dedicati.
+- Esteso inizialmente il Combat Core alle 25 Action Ability con 19 azioni operative ON; il profilo è stato poi sostituito da A-base con carrier Quadrato/Trinity ON e speciali A/Auto OFF.
 
 ## Annullato
 

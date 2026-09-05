@@ -47,7 +47,7 @@ Ogni record Final Mix è lungo `0x38` byte: weapon `+0`, Level `+2`, AbilityLeve
 
 I bit vengono aggiunti con OR: `Save+0x36C0 |= 0x76` e `Save+0x36CA |= 0x08`, senza rimuovere item estranei. Drive persistente usa `Save+0x3529/0x352A`; lo stato live usa `Slot1+0x1B0..0x1B2`. Il target è percentuale `100`, corrente `9`, massimo `9`, applicato solo con Sora in forma base.
 
-Le ricompense FMLV inserite nella tabella standard sono Auto Valor/Wisdom/Limit/Master/Final, Combo Plus x2, MP Rage, MP Haste, Draw, Lucky Lucky, Air Combo Plus x2 e Form Boost x2. Le cinque Auto Form vengono conservate senza bit equipaggiato; le altre ricompense sono attive. Il modulo controlla prima la capacità dei 69 slot, preserva abilità estranee e verifica ogni target dopo le write.
+Le ricompense FMLV inserite nella tabella standard sono Auto Valor/Wisdom/Limit/Master/Final, Combo Plus x2, MP Rage, MP Haste, Draw, Lucky Lucky x2, Air Combo Plus x2 e Form Boost x2. Le cinque Auto Form vengono conservate senza bit equipaggiato; le altre ricompense sono attive. Le due Lucky Lucky usano la formula nativa Final Mix `1 + (0,5 × copie equipaggiate)` per portare il drop item base a `2,0×`; copie aggiuntive sui personaggi in battaglia continuano a sommarsi normalmente. Il modulo controlla prima la capacità dei 69 slot, preserva abilità estranee e verifica ogni target dopo le write.
 
 ## AP Sora
 
@@ -63,6 +63,8 @@ Prima di scrivere, il modulo legge il weapon slot base `Save+0x24F0` e i cinque 
 
 Dopo i default, una Keyblade con stock maggiore di zero o presente in uno dei sei slot è posseduta; solo un target ancora assente riceve conteggio `1`. Slot Master/Final non vuoti sono scelte del giocatore e restano invariati, così come Sora, Valor, Wisdom e Limit. Questo rende idempotenti F1/reload e consente al giocatore di cambiare successivamente i due default.
 
+Ogni tentativo di write Keyblade entra nel journal prima di chiamare il backend. Se una write o verifica fallisce, il modulo ripristina in ordine inverso i valori ancora uguali al target scritto e verifica il rollback; non sovrascrive valori estranei. Un rollback incompleto viene segnalato con gli indirizzi interessati e il modulo resta disabilitato fino a F1. Questo copre anche eccezioni sollevate dopo una write già eseguita.
+
 Ultima Weapon (`ID 0x01F4`, `Save+0x368F`) viene letta soltanto per verificarne la preservazione. Alpha/Omega Weapon, Struggle Sword/Wand/Hammer, Pureblood e Kingdom Key D non appartengono al pool standard richiesto. Nessun altro weapon slot viene scritto.
 
 ## Cost Limit Gummi
@@ -75,17 +77,47 @@ Il modulo non richiede `Slot1`, perché nel Gummi Garage non esiste un attore So
 
 `KH2JokCombat_ComboMaster.lua` mantiene il nome file storico ma possiede l'intero pool Action standard di Sora e il nucleo combo. Gli ID derivano dalla lista Final Mix usata dal Randomizer:
 
-| Gruppo | Target |
+| Stato | Target |
 | --- | --- |
-| Ground/defense | Guard, Upper Slash, Horizontal Slash, Finishing Leap, Retaliating Slash, Slapshot, Dodge Slash, Flash Step, Slide Dash, Vicinity Break, Guard Break, Explosion e Counterguard |
-| Air | Aerial Sweep, Aerial Dive, Aerial Spiral, Aerial Finish e Magnet Burst |
-| Limit | Trinity Limit |
-| Auto | Auto Valor, Wisdom, Limit, Master, Final e Summon presenti ma disabilitate |
-| Combo support | Combo Master x1, Combo Plus x2 e Air Combo Plus x2 equipaggiati |
+| ON — carrier Quadrato `Type 0` | Guard, Upper Slash, Horizontal Slash, Finishing Leap, Retaliating Slash e Counterguard |
+| ON — comando | Trinity Limit |
+| OFF ma presenti — speciali A `Type 1/2/3` | Slapshot, Dodge Slash, Flash Step, Slide Dash, Vicinity Break, Guard Break, Explosion, Aerial Sweep, Aerial Dive, Aerial Spiral, Aerial Finish e Magnet Burst |
+| OFF ma presenti — Auto | Auto Valor, Wisdom, Limit, Master, Final e Summon |
+| ON — combo support | Combo Master x1, Combo Plus x2 e Air Combo Plus x2 |
 
-Il modulo scansiona i 69 slot da `Save+0x2544`, verifica la capacità prima della prima write, riusa le copie esistenti e aggiunge soltanto quelle mancanti. Ogni copia target viene portata allo stato richiesto: bit `0x8000` sulle 19 Action operative e sul nucleo combo, bit rimosso sulle sei Auto. Abilità estranee e copie extra non target restano intatte.
+Il modulo scansiona i 69 slot da `Save+0x2544`, verifica la capacità prima della prima write, riusa le copie esistenti e aggiunge soltanto quelle mancanti. Il bit `0x8000` separa disponibilità e selezione: resta ON sui sei carrier Quadrato, Trinity e supporti; viene rimosso dalle dodici speciali che KH2 può scegliere automaticamente su A e dalle sei Auto. Le motion delle speciali restano disponibili per il remap MotionId dei carrier Type 0. Abilità estranee e copie extra non target restano intatte.
 
 L'Ability Probe è read-only e riporta per ogni target quantità presente, quantità equipaggiata, stato atteso ON/OFF e slot occupati.
+
+## Combat system pianificato
+
+Il routing previsto separa la grammatica degli input dal proprietario del moveset:
+
+`input A/Quadrato → arbitraggio ownership → ground/air e fase combo → profilo corrente → record d'azione nativo completo`
+
+- A mantiene la catena normale; nel proof Normal Quadrato neutrale usa selector Guard con A319 Vicinity Break. Dopo A, Quadrato conserva la posizione e l'identità nativa Upper Slash del record 32; V5 Guard32 è respinta. Y/Triangolo resta nativo per Reaction Command e interazioni.
+- Normal mantiene una profondita virtuale `1..4`: il primo A da neutrale prepara A1; A2+ avanza soltanto quando il motore mostra una nuova motion Base; A dopo Quadrato conserva il conteggio. Neutrale, timeout, UI e cambio Form azzerano lo stato.
+- `KH2JokCombat_NormalCombo.lua` risolve la PTYA caricata dal `Btl0Pointer` e varia i MotionId Base 31/32/34. Il record 32 deve avere identità Upper Slash `12/0x12`; l'esatta firma legacy Guard `11/0x01` è ammessa solo come stato da recuperare a F1. Depth zero e contesti nativi ripristinano i fallback A315/A341; nessun indirizzo heap è hardcoded.
+- Prima di usare la cache PTYA, il router rilegge `Btl0Pointer`: cambio o unload scartano indirizzi, profondità e input pendenti senza scrivere nella vecchia tabella. Ogni nuovo BAR passa di nuovo le firme e la baseline; un tasto già tenuto non diventa un nuovo edge.
+- V1/V2 nella posizione offensiva non superano il gate hit/target; V3 negli slot 0/1 può rubare A; V5 nella posizione 32 viene letta ma rifiutata prima della motion. `KH2JokCombat_ActionProbe.lua` osserva quindi il confine dispatcher/cancel/hit-confirm senza write: M-03C confronta rolling snapshot pre-edge con motion/slot/finestra identici, mentre M-03D raggruppa le candidate in campi tipizzati e le correla ai target pointer in una riga per trial.
+- Ogni Form reale mantiene modello, MSET/ANB, PTYA, ATKP, weapon state ed effetti propri; la grammatica A/Quadrato resta comune.
+- R2 espone Normal, Dual e Feral come stance persistenti e Drive Cancel come transizione one-shot verso una vera Form; ogni switch deve rispettare finestre di cancellazione esplicite.
+- L'aspetto visivo e il carrier tecnico sono separabili: una futura stance con aspetto di Sora base può usare sotto il cofano uno stato dual-wield o Anti compatibile, se asset e transizioni vengono verificati. Non si forza per default `P_EX100` a eseguire motion straniere.
+- L'ordine minimo di ownership è menu/interazioni, Reaction Command, continuazioni native di Limit/magia, selezione R2, ramo Quadrato risolto dalla PTYA del carrier. `_OnFrame` non sintetizza input combat.
+
+## Mappa carrier Sora
+
+M-02 usa la pipeline retail `Objentry → NeoMoveset/PTYA → MotionId × 4 → MSET/ANB → trigger → ATKP/weapon/VFX`. `tools/analyze_movesets.py` verifica il fallback dei quattro slot player, il bone count motion/modello e conserva tutte le righe ATKP candidate senza assumere una dispatch `NeoStatus → SubId`.
+
+| Ruolo | Carrier meccanico | Ponte/visual | Vincolo strutturale |
+| --- | --- | --- | --- |
+| Normal | `P_EX100` | Base nativa | 228 ossa, joint arma 1 |
+| Dual esatto | `P_EX110_BTLF` | Final primario, Master backup | Roxas 229 ossa/joint 14: motion `Sxxx` non importabili direttamente |
+| Feral | `P_EX100_HTLF` | futura texture Base | 228 ossa come Base, ma collisione Anti propria da preservare |
+
+Final è preferita a Master come ponte dual perché il gruppo PTYA retail possiede famiglie ground e air complete; Master è air/hover. I due MSET arma Roxas contengono motion a 12 ossa e trigger suono/VFX, ma nessun trigger hitbox 10/33: le catene standard restano possedute dal carrier nativo.
+
+La mappa dettagliata, le catene end-to-end e le lacune sono in `docs/SoraCombat_MovesetMap.md`. M-03 usa soltanto Base; Dual/Feral e varianti base-looking appartengono a M-04 o successive.
 
 ## Pattern da preservare
 
@@ -97,7 +129,20 @@ L'Ability Probe è read-only e riporta per ogni target quantità presente, quant
 ## Integrazioni
 
 - OpenKH Mods Manager compone `Jok98/KH2-JokCombat` con `KH2FM-Mods-equations19/KH2-Lua-Library`.
+- Gli editor del Launcher OpenKH sono strumenti preferenziali quando il formato è supportato: Mset/Mset Motion Editor per animazioni, Mdlx Editor per modelli, Map/Place Editor per ambienti e System/Object Editor per dati di sistema e oggetti. Usarli per ispezione e modifiche native verificabili; mantenere Lua per runtime state e routing che gli editor non coprono.
 - La clone installata è la working copy canonica; `openkh/mod/kh2` è output di build e non una sorgente durevole.
 - `LuaBackend.toml` punta alla cartella OpenKH live, non direttamente a questa repository.
 - Ogni Build può sovrascrivere copie manuali nella cartella live, quindi il flusso corretto è modifica clone → Build → confronto hash → F1/test.
 - La validazione finale richiede F1 e feedback/log dal gameplay reale.
+
+## Logging
+
+`runtime/KH2JokCombat_Log.lua` è un modulo `io_packages` condiviso. Espone i
+flag `SYSTEM`, `COMBAT`, `DISPATCH`, `PROGRESSION`, `GUMMI`, `PROBE` e `TRACE`;
+`ERROR` e `WARNING` bypassano sempre i flag. Il profilo diagnostico corrente
+lascia ON soltanto `DISPATCH`.
+
+Gli script emettono il formato `[Modulo][CATEGORIA] messaggio`. I quattro probe
+storici controllano `PROBE`; `ActionProbe` controlla `DISPATCH`. Se il proprio
+flag è OFF non caricano `kh2lib` né entrano nel lavoro per-frame. `NormalCombo`
+usa `COMBAT` per il ramo richiesto e `TRACE` per depth, pending, cancel e reset.

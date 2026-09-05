@@ -5,6 +5,9 @@ local memory = {}
 local writeCount = 0
 local writeAttempts = 0
 local failedWriteAddress = nil
+local throwAfterWriteAddress = nil
+local foreignAfterWriteAddress = nil
+local messages = {}
 
 local TARGETS = {
     { name = "Kingdom Key", id = 0x0029, offset = 0x35A1 },
@@ -66,6 +69,14 @@ function WriteByte(address, value)
 
     memory[address] = value
     writeCount = writeCount + 1
+    if address == throwAfterWriteAddress then
+        throwAfterWriteAddress = nil
+        error("simulated exception after writing RAM")
+    end
+    if address == foreignAfterWriteAddress then
+        foreignAfterWriteAddress = nil
+        memory[address] = 0x7F
+    end
 end
 
 function WriteShort(address, value)
@@ -77,9 +88,14 @@ function WriteShort(address, value)
 
     memory[address] = value
     writeCount = writeCount + 1
+    if address == throwAfterWriteAddress then
+        throwAfterWriteAddress = nil
+        error("simulated exception after writing RAM")
+    end
 end
 
-function ConsolePrint()
+function ConsolePrint(message)
+    messages[#messages + 1] = tostring(message)
 end
 
 function RequireKH2LibraryVersion()
@@ -138,6 +154,9 @@ local weaponBefore = {}
 for _, offset in ipairs(WEAPON_SLOTS) do
     weaponBefore[offset] = memory[SAVE + offset] or 0
 end
+
+local Logger = require("runtime.KH2JokCombat_Log")
+Logger.SetEnabled("PROGRESSION", true)
 
 dofile("runtime/KH2JokCombat_Keyblades.lua")
 _OnInit()
@@ -248,7 +267,75 @@ assert(writeCount == 0, "duplicate-default conflict performed partial writes")
 assert(memory[SAVE + 0x339C] == nil, "duplicate-default conflict changed Master")
 assert(memory[SAVE + 0x32F4] == 0x01F2, "duplicate-default conflict changed Valor")
 
+local function SeedTransferCase()
+    memory = {}
+    writeCount = 0
+    writeAttempts = 0
+    messages = {}
+    failedWriteAddress = nil
+    throwAfterWriteAddress = nil
+    foreignAfterWriteAddress = nil
+    memory[NOW] = 0x02
+    memory[NOW + 1] = 0
+    memory[SLOT1 + 4] = 20
+    memory[SAVE + 0x1CEA] = 1
+    memory[SAVE + 0x368F] = 4
+    for _, target in ipairs(TARGETS) do
+        memory[SAVE + target.offset] = 1
+    end
+    _OnInit()
+end
+
+local function AssertTransferRolledBack()
+    assert(ReadShort(SAVE + 0x339C) == 0, "failed transfer left Master equipped")
+    assert(ReadShort(SAVE + 0x33D4) == 0, "failed transfer left Final equipped")
+    for _, target in ipairs(TARGETS) do
+        assert(ReadByte(SAVE + target.offset) == 1,
+            "rollback changed stock: " .. target.name)
+    end
+    assert(ReadByte(SAVE + 0x368F) == 4, "rollback touched Ultima")
+end
+
+-- Fail each of the four transfer writes, including failures after both slots
+-- have been equipped. Retry after F1 must transfer exactly one copy per slot.
+for _, offset in ipairs({ 0x339C, 0x33D4, 0x35A3, 0x368D }) do
+    SeedTransferCase()
+    failedWriteAddress = SAVE + offset
+    _OnFrame()
+    AssertTransferRolledBack()
+    local attemptsBeforeDisabledFrame = writeAttempts
+    failedWriteAddress = nil
+    _OnFrame()
+    assert(writeAttempts == attemptsBeforeDisabledFrame, "failure retried before F1")
+    _OnInit()
+    _OnFrame()
+    assert(ReadShort(SAVE + 0x339C) == 0x01F2)
+    assert(ReadShort(SAVE + 0x33D4) == 0x002B)
+    assert(ReadByte(SAVE + 0x368D) == 0, "reload duplicated Bond of Flame")
+    assert(ReadByte(SAVE + 0x35A3) == 0, "reload duplicated Oblivion")
+end
+
+-- A backend may throw after performing the write: the attempted operation
+-- must already be in the journal so its side effect is restored as well.
+for _, offset in ipairs({ 0x33D4, 0x368D }) do
+    SeedTransferCase()
+    throwAfterWriteAddress = SAVE + offset
+    _OnFrame()
+    AssertTransferRolledBack()
+end
+
+-- Rollback owns only before/desired values and must preserve foreign changes.
+SeedTransferCase()
+foreignAfterWriteAddress = SAVE + 0x35A3
+_OnFrame()
+assert(ReadByte(SAVE + 0x35A3) == 0x7F, "rollback overwrote foreign stock")
+assert(ReadShort(SAVE + 0x339C) == 0)
+assert(ReadShort(SAVE + 0x33D4) == 0)
+assert(ReadByte(SAVE + 0x368D) == 1)
+assert(string.find(table.concat(messages, "\n"), "rollback incompleto", 1, true),
+    "incomplete rollback was not reported")
+
 print(string.format(
-    "OK KH2JokCombat_Keyblades smoke test (23 targets, %d verified writes + guards)",
+    "OK KH2JokCombat_Keyblades smoke test (23 targets, %d verified writes + transaction rollback/guards)",
     successfulWriteCount
 ))

@@ -53,6 +53,9 @@ end
 SetReadySora()
 memory[SAVE + COST_OFFSET] = 0x00
 
+local Logger = require("runtime.KH2JokCombat_Log")
+Logger.SetEnabled("GUMMI", true)
+
 dofile("runtime/KH2JokCombat_GummiCost.lua")
 _OnInit()
 _OnFrame()
